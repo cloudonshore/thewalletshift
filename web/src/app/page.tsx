@@ -67,9 +67,14 @@ export default async function Home() {
             <span className="font-semibold tracking-tight">The Wallet Shift</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted">
-            <span>Ethereum mainnet</span>
-            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">Ethereum mainnet</span>
             <span className="tabular hidden sm:inline">as of {m.generated_at}</span>
+            <a
+              href="/explore"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Explore the data
+            </a>
             <a
               href="https://blog.thewalletshift.com"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
