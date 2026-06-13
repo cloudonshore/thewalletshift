@@ -6,10 +6,11 @@
 A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for agents"), built on **ERC-8004** registries on Ethereum mainnet. Hosted at **thewalletshift.com**. Built for ETHGlobal NY 2026 (target prizes: Google Cloud + ENS). Companion content on **blog.thewalletshift.com** (Substack).
 
 ## Repo layout
-- `web/` — Next.js 15 app (the dashboard). App Router, TypeScript, Tailwind, Recharts.
+- `web/` — Next.js 15 app. App Router, TS, Tailwind, Recharts, TanStack Table+Virtual. Pages: `/` (dashboard), `/agents` (virtualized browser of all 34.5k), `/explore` (event-types + sample). Routes: `/api/agents` (serves full set from GCS via `web/src/lib/gcs.ts`).
 - `sql/` — validated BigQuery query library (`erc8004_queries.sql`).
-- `scripts/` — `export-metrics.sh` (BigQuery → `web/src/data/metrics.json`).
-- `docs/` — detailed reference (agent-economy stack, BigQuery exploration findings).
+- `scripts/` — BQ→JSON exports: `export-metrics.sh` (dashboard), `export-explorer.sh` (`/explore`), `export-agents.sh` (full table → GCS); plus `explore.sh '<SQL>'` ad-hoc runner.
+- `abis/` — authoritative compiled contract ABIs (decode source-of-truth; see `abis/README.md`).
+- `docs/` — detailed reference (architecture, **agent data model**, agent-economy stack, BigQuery findings).
 - internal strategy docs (PRIZES.md, SUBMISSION.md, strategy.md, compass_*) are **gitignored** — local only.
 
 ## Git workflow (IMPORTANT)
@@ -36,6 +37,7 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
 - **Refresh data:** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → writes `web/src/data/metrics.json`, then upload it: `gcloud storage cp web/src/data/metrics.json gs://thewalletshift-data/metrics.json --project=thewalletshift --cache-control="public, max-age=300"`.
 - **Serving (Phase 1, live):** the app reads `gs://thewalletshift-data/metrics.json` at runtime via `getMetrics()` in `web/src/lib/metrics.ts` — authenticated with the App Hosting SA `firebase-app-hosting-compute@thewalletshift.iam.gserviceaccount.com` (has `objectViewer` on that bucket) via the GCE metadata server. Rendered through ISR. The bundled JSON in the repo is the offline/build fallback. Bucket is **private** (no public access).
 - **Freshness:** a GCS write self-surfaces within ~6h (Next data-cache `revalidate`). For instant refresh, build the Phase 1.5 `POST /api/revalidate` webhook; a redeploy also clears the cache. **Do NOT make the bucket public** to "fix" staleness — that's not the cause.
+- **Data objects in `gs://thewalletshift-data` (private):** `metrics.json` (dashboard — server-side ISR fetch in `lib/metrics.ts`) · `agents.json` (full 34.5k table, ~6.8 MB — client-fetched via the `/api/agents` route, which reads GCS through `lib/gcs.ts` in prod and a gitignored local copy in dev; regen via `export-agents.sh`). `explorer.json` is small and bundled in-repo.
 - **Next (Phase 2):** the 6 queries as BQ Scheduled Queries → `metrics_*` tables → `EXPORT DATA` to the bucket → cron. Firestore is deferred to per-agent profile pages only, not the dashboard.
 
 ## BigQuery facts
@@ -51,15 +53,26 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
   - Reputation: `NewFeedback` 0x6a4a6174 (3,173) · `ResponseAppended` 0xb1c6be0b (37) · `FeedbackRevoked` 0x25156fd3 (**0 — nobody revokes reviews**)
   - In ABI but never fired: `BatchMetadataUpdate`, `EIP712DomainChanged`, `FeedbackRevoked`.
 - Headline metrics (2026-06-13): 34,556 agents · 8,143 owners (top=28.8%) · 52% empty · 4,389 x402-payable. See `docs/GCP-EXPLORATION.md`.
-- **Exploration tools:** `scripts/explore.sh '<SQL>'` (ad-hoc, `\`T\`` = the table, prints bytes/cache) · `scripts/export-explorer.sh` → `web/src/data/explorer.json` (powers `/explore`).
+- **Exploration tools:** `scripts/explore.sh '<SQL>'` (ad-hoc, `\`T\`` = the table, prints bytes/cache; `-n` = dry-run cost) · `export-explorer.sh` → `explorer.json` · `export-agents.sh` → `agents.json` (full table, current owner) → GCS.
+
+## Agent data model (CRITICAL — full detail in `docs/AGENT-DATA-MODEL.md`)
+- **Two separate stores per agent, don't conflate:** (A) the **`agentURI` / Agent Card** — one string, inline `data:base64` card OR `https`/`ipfs` link OR empty; holds `{name, description, image, endpoints, active, x402Support}`. (B) the **on-chain metadata map** (`MetadataSet` event, `key→bytes`) — dominated by the reserved `agentWallet` key (auto-set every registration).
+- **Three different "owner" addresses** that diverge: registration owner (`Registered.owner`) vs **current NFT owner** (latest `Transfer.to`) vs **agentWallet** (operating wallet, store B). 37% have current owner ≠ agentWallet.
+- ⚠️ **"Top owner 28.8%" is a MINT-FACTORY contract** `0xd5d6d96f…a291` (minted 9,967 to itself, distributed all, holds ~0). **Concentration should use CURRENT owner**; the dashboard's `metrics.json` still uses registration owner (known fix).
+- **ENS is self-declared in the card, NOT verified** against the ENS registry (real ENS resolution = a prize-worthy upgrade). `kind` (onchain/https/ipfs/empty) is **derived by us** from the URI prefix, not an on-chain field.
+- **Indexing all cards (next task):** on-chain cards (~9,520) decode in SQL for **free**; off-chain `https`/`ipfs` (~4,600) need an **off-chain fetch pipeline** (content isn't on-chain). 52% have no card.
+- **Real marketplace activity exists but is minor:** 361 Seaport/OpenSea sale txns; most secondary movement is the factory batch-distributing. TODO: pull Seaport sale prices to size the real market.
 
 ## Local gotchas
 - **npm installs:** the user's `~/.npmrc` has stale auth that 401s. For installs use a clean config:
   `NPM_CONFIG_USERCONFIG=/tmp/ws-empty-npmrc NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ npm install …` (Cloud Build is unaffected.)
 - **`bq` CLI hangs (~60s timeout) when IPv6 is broken** (e.g. behind some VPNs): `bigquery.googleapis.com` resolves to IPv6, and bq's Python httplib2 has no happy-eyeballs fallback. Auth/network are fine — `curl -4` to the BigQuery REST API works instantly. The export script therefore uses **BigQuery REST over `curl -4`**, not `bq`. If you need `bq` itself, restore IPv6 (toggle VPN) or disable IPv6 on the interface.
 - bq/gcloud authed (samuel.walker9@gmail.com); firebase CLI authed; gh authed as cloudonshore.
+- **Restart the dev server after `next build`** — running `npm run build` while `next dev` is live clobbers the shared `.next` and the dev server then 500s. (Recurring "Internal Server Error" on localhost = this, not a code bug.)
+- **Browser tool (Chrome MCP) is blocked from `etherscan.io`** ("safety restrictions"). Give the user the link, or characterize contracts from BigQuery / the committed ABIs instead.
 
 ## Pointers
+- `docs/AGENT-DATA-MODEL.md` — **what the agent data IS** (two stores, card schema, the 3 owner identities + factory, marketplace findings, field provenance, card-indexing plan). Read before card/aggregate work.
 - `docs/ARCHITECTURE.md` — **data pipeline & serving design** (factory→storefront, the 4 steps, cost guardrail, rollout phases). Read before touching the pipeline.
 - `docs/AGENT-ECONOMY-STACK.md` — ERC-8004 / x402 / ERC-8257 / ERC-8183 reference + x402 dashboard methodology.
 - `docs/GCP-EXPLORATION.md` — BigQuery data exploration, cost model, validated findings.
