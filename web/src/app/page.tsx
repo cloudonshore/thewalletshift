@@ -76,6 +76,12 @@ export default async function Home() {
               Agents
             </a>
             <a
+              href="/cards"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Cards
+            </a>
+            <a
               href="/explore"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
@@ -131,7 +137,10 @@ export default async function Home() {
             <p className="mt-3 text-xs text-muted">
               Over half of agents register with{" "}
               <span className="text-foreground">no metadata at all</span> — the real, described agent
-              population is far smaller than the headline count.
+              population is far smaller than the headline count.{" "}
+              <a href="/cards" className="text-accent hover:underline">
+                See inside the cards →
+              </a>
             </p>
           </Card>
         </div>
