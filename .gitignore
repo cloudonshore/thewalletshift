@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.output/
+.vercel/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebaserc.local
+
+# Secrets / credentials — NEVER commit
+.env
+.env.*
+!.env.example
+*.key
+*-service-account*.json
+*credentials*.json
+gcp-key*.json
+serviceAccount*.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Internal strategy / competitive docs — kept local, not in the public repo
+PRIZES.md
+SUBMISSION.md
+strategy.md
+compass_artifact_*.md
