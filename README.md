@@ -37,10 +37,10 @@ Raw ERC-8004 event logs are decoded directly in BigQuery SQL (no off-chain index
 
 ## Repo layout
 
+- `web/` — Next.js dashboard app
 - `sql/` — the BigQuery query library (ERC-8004 decoders + dashboard metrics)
-- `GCP-EXPLORATION.md` — data-source exploration notes, cost model, validated findings
-- `AGENT-ECONOMY-STACK.md` — reference on the agent-economy protocol stack (ERC-8004, x402, ERC-8257, ERC-8183)
-- frontend app — _in progress_
+- `scripts/` — metrics export (BigQuery → dashboard data)
+- `docs/` — detailed reference: [agent-economy stack](docs/AGENT-ECONOMY-STACK.md), [BigQuery exploration findings](docs/GCP-EXPLORATION.md)
 
 ## Methodology & transparency
 
