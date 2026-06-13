@@ -20,12 +20,19 @@ An agent's information lives in **two completely separate places**:
 - **`kind` is DERIVED by us** from the URI prefix (onchain/https/ipfs/http/empty/
   other). It is not an on-chain field.
 - **Card JSON schema** (when the card is present/fetchable):
-  `{ type, name, description, image, endpoints:[{name, endpoint}], active, x402Support, … }`
-  - **ENS** = an entry in `endpoints` where `name="ens"`. **Self-declared, NOT
+  `{ type, name, description, image, services:[{name, endpoint, type?}], active, x402Support, supportedTrust:[…], … }`
+  - ⚠️ **The callable-interface key is `services`, NOT `endpoints`.** (An older
+    handful of cards use `endpoints`; accept either, prefer `services`.) Each entry
+    is `{name, endpoint, type?}` — e.g. `name:"A2A"`, `name:"web"`, `name:"MCP"`.
+    This is the **"how do I actually call this agent"** data. On-chain only 224
+    cards have a non-empty `services`; the rest of the interactable agents host
+    their card off-chain (see the fetch pipeline below).
+  - **ENS** = a `services`/`endpoints` entry named `ens`, **or** an ENS `binding`
+    (`binding:{type:"ens", name:"…"}`, used by ens8004.xyz). **Self-declared, NOT
     verified** against the ENS registry. An agent can claim any name.
   - **x402 capability** = the `x402Support` boolean.
-  - `type` here is the card's self-description (e.g. "AgentCard") — different from
-    our derived `kind`.
+  - `type` is the card's **schema URI** (e.g. `…/eip-8004#registration-v1`), a
+    compliance/version signal — different from our derived `kind`.
 
 ### Store B — the on-chain metadata map (`MetadataSet` event)
 - `mapping(agentId => key => bytes)` in contract storage. Written via
@@ -80,17 +87,33 @@ owner.** (Dashboard `metrics.json` still uses registration owner — known fix.)
 - **Caveats:** card fields are **registration-time** (URI changes by the 1,365
   `URIUpdated` agents are not reflected); **ENS is self-declared, not verified**.
 
-## Indexing ALL cards (the next task) — the key split
-Aggregate card analytics splits by where the card lives:
-- **On-chain cards** (`data:base64`, ~9,520): the full card is in the log → fully
-  **decodable in SQL on `logs_2026` for FREE**. Aggregate any field (categories,
-  skills, x402, ENS presence, `image`/`active` presence, name patterns…) directly.
-- **Off-chain cards** (`https`/`ipfs`, ~4,600+): the URI is just a **link**; the
-  content is NOT on-chain → must **fetch each URL** (a Cloud Run / Functions job),
-  parse, then index. Not free, not in BigQuery, and some links will be dead.
-- **Empty** (~52%): no card to index.
-→ So phase 1 of card indexing = the on-chain subset (free, now); off-chain needs a
-  separate fetch pipeline (decide if worth it).
+## Card indexing — BUILT (on-chain in SQL + off-chain fetch pipeline)
+Coverage of all 34,556 agents: **onchain 9,520 · offchain 4,662 (fetchable
+https/ipfs links) · other 2,325 (gzip-data / bare-text / malformed junk) · empty
+18,049**. Two indexing paths, both implemented:
+- **On-chain cards** (`data:base64`, 9,520): full card is in the log →
+  **decoded in SQL on `logs_2026` for FREE**. `scripts/export-cards.sh` →
+  `web/src/data/cards.json` (bundled aggregates); per-agent fields also baked into
+  `agents.json` by `export-agents.sh`.
+- **Off-chain cards** (`https`/`ipfs`, 4,662): URI is just a **link** — content is
+  NOT on-chain, and **BigQuery cannot fetch it (no network egress).** Pipeline:
+  `export-offchain-uris.sh` (BQ extracts the URL worklist) → `fetch-cards.mjs`
+  (Node HTTP GETs each, parses, host-interleaved + SSRF-safe + `--retry-failed`
+  for rate-limited hosts) → `merge-cards.mjs` (folds fields into `agents.json`,
+  adds combined interactability + reachability to `cards.json`). Runs **locally
+  today**; promote to a Cloud Run Job for scheduled refresh (Cloud Run *can*
+  egress; BQ can't).
+- **Reachability (2026-06-13 run):** of 4,662 links, **~2,012 returned a live card
+  (43%)** after retry; the rest are dead (404/DNS), behind bot-protection (Vercel),
+  rate-limited (persistent 429), or point at a homepage.
+  - ⚠️ **`ag0.xyz` = 1,985 agents (43% of off-chain) all point at the bare homepage
+    `https://ag0.xyz`** (no per-agent path) → unresolvable placeholder/spam. The
+    single biggest "platform" is noise. Real rich cards: `api.normies.art` (1,171),
+    `api.freaks.one` (267) — both expose A2A + web services.
+- **Interactability (combined on-chain + off-chain):** **~2,158 agents expose a
+  callable `services` interface** — A2A ~1,378 · web ~1,887 · MCP ~518 (overlap).
+  This is the honest "agents you can actually call/pay," vs 34.5k raw registrations.
+- **Empty** (52%): no card to index.
 
 ## SQL decoding cheatsheet (against `logs_2026`)
 - **agentURI** (from `Registered`):
