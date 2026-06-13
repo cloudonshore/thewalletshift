@@ -40,10 +40,16 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
 
 ## BigQuery facts
 - Project `thewalletshift`, dataset `erc8004`, **query the materialized table `thewalletshift.erc8004.logs_2026`** (95 MB, free) — NOT the 3 TB public table.
-- Public source: `bigquery-public-data.goog_blockchain_ethereum_mainnet_us.logs` (US, partitioned by month; Base NOT available).
+- Public source: `bigquery-public-data.goog_blockchain_ethereum_mainnet_us.logs` (US, partitioned by month; Base/L2s NOT available).
 - Registries: Identity `0x8004a169fb4a3325136eb29fa0ceb6d2e539a432` · Reputation `0x8004baa17c55a88189ae136b182e5fda19de9b63`.
-- Event sigs (topics[0]): Registered `0xca52e62c…` · NewFeedback `0x6a4a6174…` · Transfer `0xddf252ad…`.
+- **Coverage confirmed (2026-06-13):** table holds BOTH registries, mainnet, full history — Identity 156,269 rows (Jan 29→Jun 13), Reputation 3,215 rows (Jan 29→Jun 12). No stray addresses. Reconciles to 159,484.
+- **SCOPE = Ethereum mainnet only (locked).** Same 2 addresses are deterministically deployed on Base/Arbitrum/Avalanche/BSC/Abstract too, and most agent *volume* is on the cheap L2s — but those chains aren't in BigQuery public data, so multi-chain would need a separate indexer. Mainnet-only is a deliberate *feature*: "these agents paid real gas → higher-signal, less Sybil."
+- **ValidationRegistry** (3rd pillar of the standard) exists in the contracts repo but is **deployed nowhere** (no address on any chain). Watch item: add it when it goes live on mainnet.
+- **Event signatures (topics[0], verified via keccak256 vs the repo ABI — see `scripts/explore.sh`):**
+  - Identity: `Registered` 0xca52e62c (34,556) · `MetadataSet` 0x2c149ed5 (52,789, *liveness signal — edits > registrations*) · `URIUpdated` 0x3a2c7fff (1,365) · `Transfer` 0xddf252ad (49,305) · `ApprovalForAll` 0x17307eab (303) · **UNKNOWN 0xf8e1a15a (17,943 — 1 topic, not in ABI, still undecoded)**
+  - Reputation: `NewFeedback` 0x6a4a6174 (3,173) · `ResponseAppended` 0xb1c6be0b (37) · `FeedbackRevoked` 0x25156fd3 (~0)
 - Headline metrics (2026-06-13): 34,556 agents · 8,143 owners (top=28.8%) · 52% empty · 4,389 x402-payable. See `docs/GCP-EXPLORATION.md`.
+- **Exploration tools:** `scripts/explore.sh '<SQL>'` (ad-hoc, `\`T\`` = the table, prints bytes/cache) · `scripts/export-explorer.sh` → `web/src/data/explorer.json` (powers `/explore`).
 
 ## Local gotchas
 - **npm installs:** the user's `~/.npmrc` has stale auth that 401s. For installs use a clean config:
