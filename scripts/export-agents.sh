@@ -49,6 +49,10 @@ SELECT TO_JSON_STRING(ARRAY_AGG(STRUCT(
   SUBSTR(JSON_VALUE(j,'\$.name'),0,40) AS name,
   (SELECT JSON_VALUE(e,'\$.endpoint') FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.endpoints')) e WHERE JSON_VALUE(e,'\$.name')='ens' LIMIT 1) AS ens,
   JSON_VALUE(j,'\$.x402Support') AS x402,
+  -- card's self-declared liveness flag (on-chain cards only; null for off-chain/empty)
+  JSON_VALUE(j,'\$.active') AS active,
+  -- supportedTrust models joined (e.g. 'reputation,tee-attestation'); '' -> null in python
+  NULLIF(ARRAY_TO_STRING(ARRAY(SELECT JSON_VALUE(t) FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.supportedTrust')) t),','),'') AS trust,
   SUBSTR(JSON_VALUE(j,'\$.description'),0,90) AS descr
 ) ORDER BY id)) AS payload
 FROM card"
@@ -69,7 +73,7 @@ payload = d["rows"][0]["f"][0]["v"]
 agents = json.loads(payload) if payload else []
 # normalize empty strings -> None for cleaner client code
 for a in agents:
-    for k in ("name","ens","x402","descr"):
+    for k in ("name","ens","x402","active","trust","descr"):
         if a.get(k) == "": a[k] = None
 data = {"generated_at": day, "network": "ethereum-mainnet", "count": len(agents), "agents": agents}
 json.dump(data, open(out,"w"), separators=(",",":"))

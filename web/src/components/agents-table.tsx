@@ -22,6 +22,8 @@ export interface Agent {
   name: string | null;
   ens: string | null;
   x402: string | null;
+  active: string | null;
+  trust: string | null;
   descr: string | null;
 }
 
@@ -69,6 +71,33 @@ const columns = [
         <span className="text-[11px] text-muted/40">—</span>
       ),
   }),
+  col.accessor("active", {
+    header: "Status",
+    filterFn: "equalsString",
+    cell: (c) =>
+      c.getValue() === "true" ? (
+        <span className="inline-flex items-center gap-1 text-[11px] text-accent">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />live
+        </span>
+      ) : c.getValue() === "false" ? (
+        <span className="text-[11px] text-amber-400">dormant</span>
+      ) : (
+        <span className="text-[11px] text-muted/40">—</span>
+      ),
+  }),
+  col.accessor("trust", {
+    header: "Trust",
+    cell: (c) => {
+      const v = c.getValue();
+      if (!v) return <span className="text-[11px] text-muted/40">—</span>;
+      return (
+        <span title={v} className="text-[11px] text-violet-300">
+          {v.split(",")[0]}
+          {v.includes(",") && <span className="text-muted/50"> +{v.split(",").length - 1}</span>}
+        </span>
+      );
+    },
+  }),
   col.accessor("ens", {
     header: "ENS",
     cell: (c) => <span className="font-mono text-xs text-accent">{c.getValue() ?? ""}</span>,
@@ -97,7 +126,8 @@ const columns = [
 ];
 
 // grid template shared by header + rows so columns line up under virtualization
-const GRID = "4.5rem minmax(7rem,1.1fr) 8.5rem 4.75rem 3.5rem 5.5rem 6rem minmax(9rem,1.3fr) minmax(9rem,1.5fr)";
+const GRID =
+  "4.5rem minmax(6.5rem,1.1fr) 8.5rem 4.5rem 3.25rem 4rem 5rem 5rem 6rem minmax(8rem,1.3fr) minmax(8rem,1.4fr)";
 
 const KINDS = ["onchain", "https", "ipfs", "other", "empty"];
 
@@ -142,6 +172,7 @@ export function AgentsTable() {
 
   const kindFilter = (columnFilters.find((f) => f.id === "kind")?.value as string) ?? "";
   const x402Filter = (columnFilters.find((f) => f.id === "x402")?.value as string) ?? "";
+  const activeFilter = (columnFilters.find((f) => f.id === "active")?.value as string) ?? "";
   const setColFilter = (id: string, value: string) =>
     setColumnFilters((prev) => prev.filter((f) => f.id !== id).concat(value ? [{ id, value }] : []));
 
@@ -178,6 +209,21 @@ export function AgentsTable() {
               key={label}
               onClick={() => setColFilter("x402", v)}
               className={`px-2.5 py-2 transition-colors ${x402Filter === v ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-border text-xs">
+          {[
+            ["", "status: any"],
+            ["true", "live"],
+            ["false", "dormant"],
+          ].map(([v, label]) => (
+            <button
+              key={label}
+              onClick={() => setColFilter("active", v)}
+              className={`px-2.5 py-2 transition-colors ${activeFilter === v ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"}`}
             >
               {label}
             </button>
