@@ -102,10 +102,30 @@ polling. `lib/metrics.ts` is the only file that changes.
 - **BI Engine** — an in-memory accelerator for live Looker/Tableau dashboards, not
   a custom high-traffic site. Not our pattern.
 
+## Freshness & cache layers (important)
+A write to the GCS object does **not** appear on the site immediately. There are
+three cache layers, by design:
+1. The GCS-fetch result is in Next's **data cache** for 6h (`revalidate` on the
+   fetch) — matches the daily-ish pipeline.
+2. The rendered page is in Next's **route cache**, regenerated ~50m (lowest
+   `revalidate` among the page and its fetches; the token fetch drives this).
+3. The CDN edge caches the page (`s-maxage`) and serves stale-while-revalidate.
+
+So a fresh GCS write surfaces within ~6h on its own. To make a pipeline run appear
+**instantly**, add **on-demand revalidation**: a `POST /api/revalidate` route
+(secret-guarded) that calls `revalidatePath('/')`, invalidating layers 1–2; the
+pipeline's last step calls it. This is the proper way to "push" updates and is the
+next increment after the pipeline exists. (Clearing the cache otherwise requires a
+redeploy — fine for code changes, wrong as a data-refresh mechanism.)
+
 ## Rollout status
 - [x] **Phase 0** — real `metrics.json`, baked into the build (refresh = redeploy).
-- [ ] **Phase 1** — bucket `gs://thewalletshift-data`; app reads JSON via ISR fetch
-      (decouples data refresh from deploys).
+- [x] **Phase 1** — bucket `gs://thewalletshift-data` (private); App Hosting SA has
+      `objectViewer`; app reads the object at runtime via the metadata server and
+      renders it through ISR, with the bundled JSON as offline/fallback. Data
+      refresh is now decoupled from deploys. *(Verified live 2026-06-13.)*
+- [ ] **Phase 1.5** — `POST /api/revalidate` for instant refresh (see above); wire
+      it once the pipeline can call it.
 - [ ] **Phase 2** — the 6 queries as Scheduled Queries writing `metrics_*` tables +
       an `EXPORT DATA` to the bucket (the daily pipeline).
 - [ ] **Phase 3** — harden ① incremental ingest with partition filters (cost

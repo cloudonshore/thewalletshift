@@ -31,9 +31,12 @@ A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for
 - Untouched: `CNAME blog → substack`, `CNAME www → thewalletshift.com`, NS records.
 - Verify DNS: `dig @ns47.domaincontrol.com +short thewalletshift.com A`
 
-## Data pipeline
-- **Now (Stage 1):** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → queries BigQuery → writes `web/src/data/metrics.json`, which the dashboard imports. Real data, no Firebase dependency.
-- **Later (Stage 2):** same SQL as scheduled BigQuery rollups → Firestore (BQ→Firestore extension) → frontend reads Firestore live; + Cloud Run `/api/live-query` for the on-stage demo. Keep the JSON shape stable so the frontend swap is one file (`web/src/lib/metrics.ts`).
+## Data pipeline — see `docs/ARCHITECTURE.md` for the full design + rollout phases
+Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never query BQ from the app.
+- **Refresh data:** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → writes `web/src/data/metrics.json`, then upload it: `gcloud storage cp web/src/data/metrics.json gs://thewalletshift-data/metrics.json --project=thewalletshift --cache-control="public, max-age=300"`.
+- **Serving (Phase 1, live):** the app reads `gs://thewalletshift-data/metrics.json` at runtime via `getMetrics()` in `web/src/lib/metrics.ts` — authenticated with the App Hosting SA `firebase-app-hosting-compute@thewalletshift.iam.gserviceaccount.com` (has `objectViewer` on that bucket) via the GCE metadata server. Rendered through ISR. The bundled JSON in the repo is the offline/build fallback. Bucket is **private** (no public access).
+- **Freshness:** a GCS write self-surfaces within ~6h (Next data-cache `revalidate`). For instant refresh, build the Phase 1.5 `POST /api/revalidate` webhook; a redeploy also clears the cache. **Do NOT make the bucket public** to "fix" staleness — that's not the cause.
+- **Next (Phase 2):** the 6 queries as BQ Scheduled Queries → `metrics_*` tables → `EXPORT DATA` to the bucket → cron. Firestore is deferred to per-agent profile pages only, not the dashboard.
 
 ## BigQuery facts
 - Project `thewalletshift`, dataset `erc8004`, **query the materialized table `thewalletshift.erc8004.logs_2026`** (95 MB, free) — NOT the 3 TB public table.
