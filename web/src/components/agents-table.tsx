@@ -18,6 +18,7 @@ export interface Agent {
   owner: string | null;
   reg: string;
   kind: string;
+  uri: string | null;
   name: string | null;
   ens: string | null;
   x402: string | null;
@@ -73,6 +74,22 @@ const columns = [
     cell: (c) => <span className="font-mono text-xs text-accent">{c.getValue() ?? ""}</span>,
   }),
   col.accessor("reg", { header: "Registered", cell: (c) => <span className="tabular text-xs text-muted">{c.getValue()}</span> }),
+  col.accessor("uri", {
+    header: "Profile",
+    enableSorting: false,
+    cell: (c) => {
+      const u = c.getValue();
+      if (!u) return <span className="text-[11px] text-muted/40">—</span>;
+      const href = u.startsWith("http") ? u : u.startsWith("ipfs://") ? `https://ipfs.io/ipfs/${u.slice(7)}` : null;
+      return href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" title={u} className="text-xs text-sky-300 hover:underline">
+          {u}
+        </a>
+      ) : (
+        <span title={u} className="text-xs text-muted">{u}</span>
+      );
+    },
+  }),
   col.accessor("descr", {
     header: "Description",
     cell: (c) => <span className="text-xs text-muted">{c.getValue() ?? ""}</span>,
@@ -80,7 +97,7 @@ const columns = [
 ];
 
 // grid template shared by header + rows so columns line up under virtualization
-const GRID = "5rem minmax(8rem,1.4fr) 9rem 5.5rem 4rem 8rem 6.5rem minmax(10rem,2.2fr)";
+const GRID = "4.5rem minmax(7rem,1.1fr) 8.5rem 4.75rem 3.5rem 5.5rem 6rem minmax(9rem,1.3fr) minmax(9rem,1.5fr)";
 
 const KINDS = ["onchain", "https", "ipfs", "other", "empty"];
 
@@ -106,6 +123,9 @@ export function AgentsTable() {
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     globalFilterFn: "includesString",
+    // search ALL text columns — TanStack otherwise sniffs the first row (agent #0
+    // is an empty shell with null name/uri/ens/descr) and drops those columns.
+    getColumnCanGlobalFilter: () => true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),

@@ -44,6 +44,8 @@ SELECT TO_JSON_STRING(ARRAY_AGG(STRUCT(
   owner,
   CAST(reg AS STRING) AS reg,
   kind,
+  -- real link for off-chain cards; null for inline on-chain (decoded below) or empty
+  CASE WHEN STARTS_WITH(uri,'data:application/json;base64,') OR uri IS NULL OR uri='' THEN NULL ELSE uri END AS uri,
   SUBSTR(JSON_VALUE(j,'\$.name'),0,40) AS name,
   (SELECT JSON_VALUE(e,'\$.endpoint') FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.endpoints')) e WHERE JSON_VALUE(e,'\$.name')='ens' LIMIT 1) AS ens,
   JSON_VALUE(j,'\$.x402Support') AS x402,
