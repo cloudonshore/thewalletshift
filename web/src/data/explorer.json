@@ -19,6 +19,11 @@
       "count": 34556
     },
     {
+      "name": "MetadataUpdate",
+      "plain": "a profile change broadcast to indexers (ERC-4906)",
+      "count": 17943
+    },
+    {
       "name": "NewFeedback",
       "plain": "someone reviewed an agent",
       "count": 3173

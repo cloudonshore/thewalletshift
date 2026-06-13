@@ -45,9 +45,11 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
 - **Coverage confirmed (2026-06-13):** table holds BOTH registries, mainnet, full history — Identity 156,269 rows (Jan 29→Jun 13), Reputation 3,215 rows (Jan 29→Jun 12). No stray addresses. Reconciles to 159,484.
 - **SCOPE = Ethereum mainnet only (locked).** Same 2 addresses are deterministically deployed on Base/Arbitrum/Avalanche/BSC/Abstract too, and most agent *volume* is on the cheap L2s — but those chains aren't in BigQuery public data, so multi-chain would need a separate indexer. Mainnet-only is a deliberate *feature*: "these agents paid real gas → higher-signal, less Sybil."
 - **ValidationRegistry** (3rd pillar of the standard) exists in the contracts repo but is **deployed nowhere** (no address on any chain). Watch item: add it when it goes live on mainnet.
-- **Event signatures (topics[0], verified via keccak256 vs the repo ABI — see `scripts/explore.sh`):**
-  - Identity: `Registered` 0xca52e62c (34,556) · `MetadataSet` 0x2c149ed5 (52,789, *liveness signal — edits > registrations*) · `URIUpdated` 0x3a2c7fff (1,365) · `Transfer` 0xddf252ad (49,305) · `ApprovalForAll` 0x17307eab (303) · **UNKNOWN 0xf8e1a15a (17,943 — 1 topic, not in ABI, still undecoded)**
-  - Reputation: `NewFeedback` 0x6a4a6174 (3,173) · `ResponseAppended` 0xb1c6be0b (37) · `FeedbackRevoked` 0x25156fd3 (~0)
+- **Authoritative ABIs:** committed at `abis/{Identity,Reputation,Validation}Registry.json` (copied from the official repo's compiled `abis/`). ALWAYS decode against these, not hand-read `.sol` `event` lines — the compiled ABI includes inherited events (ERC-4906, OZ) the source files don't declare. These are UUPS proxies → impls Identity `0x7274e874…` / Reputation `0x16e0fa7f…` (upgraded only at launch, stable since).
+- **Event signatures (topics[0], full map verified via keccak vs the compiled ABI — every signature in the table is accounted for, zero leftovers):**
+  - Identity: `Registered` 0xca52e62c (34,556) · `MetadataSet` 0x2c149ed5 (52,789, *liveness signal — edits > registrations*) · `Transfer` 0xddf252ad (49,305) · `MetadataUpdate` 0xf8e1a15a (17,943 — **inherited ERC-4906** ping, fires when a URI is set/changed) · `URIUpdated` 0x3a2c7fff (1,365) · `ApprovalForAll` 0x17307eab (303) · `Approval`/`Initialized`/`Upgraded`/`OwnershipTransferred` (1–3 each, plumbing)
+  - Reputation: `NewFeedback` 0x6a4a6174 (3,173) · `ResponseAppended` 0xb1c6be0b (37) · `FeedbackRevoked` 0x25156fd3 (**0 — nobody revokes reviews**)
+  - In ABI but never fired: `BatchMetadataUpdate`, `EIP712DomainChanged`, `FeedbackRevoked`.
 - Headline metrics (2026-06-13): 34,556 agents · 8,143 owners (top=28.8%) · 52% empty · 4,389 x402-payable. See `docs/GCP-EXPLORATION.md`.
 - **Exploration tools:** `scripts/explore.sh '<SQL>'` (ad-hoc, `\`T\`` = the table, prints bytes/cache) · `scripts/export-explorer.sh` → `web/src/data/explorer.json` (powers `/explore`).
 
