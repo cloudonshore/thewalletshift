@@ -45,7 +45,8 @@ A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for
 ## Local gotchas
 - **npm installs:** the user's `~/.npmrc` has stale auth that 401s. For installs use a clean config:
   `NPM_CONFIG_USERCONFIG=/tmp/ws-empty-npmrc NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ npm install …` (Cloud Build is unaffected.)
-- bq CLI is authed (samuel.walker9@gmail.com); firebase CLI is authed; gh authed as cloudonshore.
+- **`bq` CLI hangs (~60s timeout) when IPv6 is broken** (e.g. behind some VPNs): `bigquery.googleapis.com` resolves to IPv6, and bq's Python httplib2 has no happy-eyeballs fallback. Auth/network are fine — `curl -4` to the BigQuery REST API works instantly. The export script therefore uses **BigQuery REST over `curl -4`**, not `bq`. If you need `bq` itself, restore IPv6 (toggle VPN) or disable IPv6 on the interface.
+- bq/gcloud authed (samuel.walker9@gmail.com); firebase CLI authed; gh authed as cloudonshore.
 
 ## Pointers
 - `docs/AGENT-ECONOMY-STACK.md` — ERC-8004 / x402 / ERC-8257 / ERC-8183 reference + x402 dashboard methodology.
