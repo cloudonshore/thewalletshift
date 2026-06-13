@@ -1,9 +1,11 @@
 import { GrowthChart, MetadataDonut, OwnerBars, X402Bar } from "@/components/charts";
-import { fmt, metrics, pct } from "@/lib/metrics";
+import { fmt, getMetrics, pct } from "@/lib/metrics";
 
-const m = metrics;
-const emptyPct = (m.summary.empty_metadata / m.summary.agents) * 100;
-const payablePct = (m.summary.x402_payable / m.summary.onchain_cards) * 100;
+// Statically generated, refreshed by ISR every 6h (must be a literal — Next reads
+// this at build time). Visitors hit the edge-cached page; the GCS read happens once
+// per regeneration. Keep in sync with REVALIDATE_SECONDS in lib/metrics.ts. See
+// docs/ARCHITECTURE.md.
+export const revalidate = 21600;
 
 function Card({
   title,
@@ -51,7 +53,11 @@ function Stat({
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const m = await getMetrics();
+  const emptyPct = (m.summary.empty_metadata / m.summary.agents) * 100;
+  const payablePct = (m.summary.x402_payable / m.summary.onchain_cards) * 100;
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
