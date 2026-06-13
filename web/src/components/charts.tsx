@@ -39,7 +39,19 @@ export function GrowthChart({ data }: { data: GrowthPoint[] }) {
             <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <XAxis dataKey="day" stroke={AXIS} fontSize={11} tickLine={false} axisLine={{ stroke: GRID }} />
+        <XAxis
+          dataKey="day"
+          stroke={AXIS}
+          fontSize={11}
+          tickLine={false}
+          axisLine={{ stroke: GRID }}
+          minTickGap={36}
+          tickFormatter={(d: string) =>
+            d.length >= 7
+              ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+              : d
+          }
+        />
         <YAxis
           stroke={AXIS}
           fontSize={11}
