@@ -12,44 +12,724 @@
     "top10_owner_pct": 46.0
   },
   "growth_daily": [
-    { "day": "2026-01", "new_agents": 28896 },
-    { "day": "2026-02", "new_agents": 7768 },
-    { "day": "2026-03", "new_agents": 7342 },
-    { "day": "2026-04", "new_agents": 313 },
-    { "day": "2026-05", "new_agents": 4426 },
-    { "day": "2026-06", "new_agents": 448 }
+    {
+      "day": "2026-01-29",
+      "new_agents": 13446
+    },
+    {
+      "day": "2026-01-30",
+      "new_agents": 8090
+    },
+    {
+      "day": "2026-01-31",
+      "new_agents": 1159
+    },
+    {
+      "day": "2026-02-01",
+      "new_agents": 70
+    },
+    {
+      "day": "2026-02-02",
+      "new_agents": 81
+    },
+    {
+      "day": "2026-02-03",
+      "new_agents": 62
+    },
+    {
+      "day": "2026-02-04",
+      "new_agents": 72
+    },
+    {
+      "day": "2026-02-05",
+      "new_agents": 153
+    },
+    {
+      "day": "2026-02-06",
+      "new_agents": 33
+    },
+    {
+      "day": "2026-02-07",
+      "new_agents": 298
+    },
+    {
+      "day": "2026-02-08",
+      "new_agents": 199
+    },
+    {
+      "day": "2026-02-09",
+      "new_agents": 290
+    },
+    {
+      "day": "2026-02-10",
+      "new_agents": 35
+    },
+    {
+      "day": "2026-02-11",
+      "new_agents": 55
+    },
+    {
+      "day": "2026-02-12",
+      "new_agents": 131
+    },
+    {
+      "day": "2026-02-13",
+      "new_agents": 174
+    },
+    {
+      "day": "2026-02-14",
+      "new_agents": 751
+    },
+    {
+      "day": "2026-02-15",
+      "new_agents": 151
+    },
+    {
+      "day": "2026-02-16",
+      "new_agents": 222
+    },
+    {
+      "day": "2026-02-17",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-02-18",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-02-19",
+      "new_agents": 25
+    },
+    {
+      "day": "2026-02-20",
+      "new_agents": 174
+    },
+    {
+      "day": "2026-02-21",
+      "new_agents": 648
+    },
+    {
+      "day": "2026-02-22",
+      "new_agents": 38
+    },
+    {
+      "day": "2026-02-23",
+      "new_agents": 39
+    },
+    {
+      "day": "2026-02-24",
+      "new_agents": 370
+    },
+    {
+      "day": "2026-02-25",
+      "new_agents": 1098
+    },
+    {
+      "day": "2026-02-26",
+      "new_agents": 11
+    },
+    {
+      "day": "2026-02-27",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-02-28",
+      "new_agents": 4
+    },
+    {
+      "day": "2026-03-01",
+      "new_agents": 266
+    },
+    {
+      "day": "2026-03-02",
+      "new_agents": 22
+    },
+    {
+      "day": "2026-03-03",
+      "new_agents": 73
+    },
+    {
+      "day": "2026-03-04",
+      "new_agents": 75
+    },
+    {
+      "day": "2026-03-05",
+      "new_agents": 6
+    },
+    {
+      "day": "2026-03-06",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-03-07",
+      "new_agents": 7
+    },
+    {
+      "day": "2026-03-08",
+      "new_agents": 11
+    },
+    {
+      "day": "2026-03-09",
+      "new_agents": 18
+    },
+    {
+      "day": "2026-03-10",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-03-11",
+      "new_agents": 50
+    },
+    {
+      "day": "2026-03-12",
+      "new_agents": 43
+    },
+    {
+      "day": "2026-03-13",
+      "new_agents": 28
+    },
+    {
+      "day": "2026-03-14",
+      "new_agents": 158
+    },
+    {
+      "day": "2026-03-15",
+      "new_agents": 252
+    },
+    {
+      "day": "2026-03-16",
+      "new_agents": 61
+    },
+    {
+      "day": "2026-03-17",
+      "new_agents": 33
+    },
+    {
+      "day": "2026-03-18",
+      "new_agents": 20
+    },
+    {
+      "day": "2026-03-19",
+      "new_agents": 24
+    },
+    {
+      "day": "2026-03-20",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-03-21",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-03-22",
+      "new_agents": 24
+    },
+    {
+      "day": "2026-03-23",
+      "new_agents": 13
+    },
+    {
+      "day": "2026-03-24",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-03-25",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-03-26",
+      "new_agents": 18
+    },
+    {
+      "day": "2026-03-27",
+      "new_agents": 223
+    },
+    {
+      "day": "2026-03-28",
+      "new_agents": 2345
+    },
+    {
+      "day": "2026-03-29",
+      "new_agents": 3
+    },
+    {
+      "day": "2026-03-30",
+      "new_agents": 9
+    },
+    {
+      "day": "2026-03-31",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-04-01",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-04-02",
+      "new_agents": 2
+    },
+    {
+      "day": "2026-04-03",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-04-04",
+      "new_agents": 14
+    },
+    {
+      "day": "2026-04-05",
+      "new_agents": 38
+    },
+    {
+      "day": "2026-04-06",
+      "new_agents": 9
+    },
+    {
+      "day": "2026-04-07",
+      "new_agents": 3
+    },
+    {
+      "day": "2026-04-08",
+      "new_agents": 4
+    },
+    {
+      "day": "2026-04-09",
+      "new_agents": 6
+    },
+    {
+      "day": "2026-04-10",
+      "new_agents": 11
+    },
+    {
+      "day": "2026-04-11",
+      "new_agents": 2
+    },
+    {
+      "day": "2026-04-12",
+      "new_agents": 6
+    },
+    {
+      "day": "2026-04-13",
+      "new_agents": 1
+    },
+    {
+      "day": "2026-04-14",
+      "new_agents": 14
+    },
+    {
+      "day": "2026-04-15",
+      "new_agents": 9
+    },
+    {
+      "day": "2026-04-16",
+      "new_agents": 2
+    },
+    {
+      "day": "2026-04-17",
+      "new_agents": 3
+    },
+    {
+      "day": "2026-04-18",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-04-19",
+      "new_agents": 2
+    },
+    {
+      "day": "2026-04-20",
+      "new_agents": 6
+    },
+    {
+      "day": "2026-04-21",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-04-22",
+      "new_agents": 2
+    },
+    {
+      "day": "2026-04-23",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-04-24",
+      "new_agents": 11
+    },
+    {
+      "day": "2026-04-25",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-04-26",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-04-27",
+      "new_agents": 13
+    },
+    {
+      "day": "2026-04-28",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-04-29",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-04-30",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-05-01",
+      "new_agents": 12
+    },
+    {
+      "day": "2026-05-02",
+      "new_agents": 22
+    },
+    {
+      "day": "2026-05-03",
+      "new_agents": 22
+    },
+    {
+      "day": "2026-05-04",
+      "new_agents": 14
+    },
+    {
+      "day": "2026-05-05",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-05-06",
+      "new_agents": 13
+    },
+    {
+      "day": "2026-05-07",
+      "new_agents": 9
+    },
+    {
+      "day": "2026-05-08",
+      "new_agents": 22
+    },
+    {
+      "day": "2026-05-09",
+      "new_agents": 143
+    },
+    {
+      "day": "2026-05-10",
+      "new_agents": 6
+    },
+    {
+      "day": "2026-05-11",
+      "new_agents": 10
+    },
+    {
+      "day": "2026-05-12",
+      "new_agents": 7
+    },
+    {
+      "day": "2026-05-13",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-05-14",
+      "new_agents": 5
+    },
+    {
+      "day": "2026-05-15",
+      "new_agents": 280
+    },
+    {
+      "day": "2026-05-16",
+      "new_agents": 196
+    },
+    {
+      "day": "2026-05-17",
+      "new_agents": 74
+    },
+    {
+      "day": "2026-05-18",
+      "new_agents": 47
+    },
+    {
+      "day": "2026-05-19",
+      "new_agents": 98
+    },
+    {
+      "day": "2026-05-20",
+      "new_agents": 124
+    },
+    {
+      "day": "2026-05-21",
+      "new_agents": 375
+    },
+    {
+      "day": "2026-05-22",
+      "new_agents": 110
+    },
+    {
+      "day": "2026-05-23",
+      "new_agents": 136
+    },
+    {
+      "day": "2026-05-24",
+      "new_agents": 124
+    },
+    {
+      "day": "2026-05-25",
+      "new_agents": 13
+    },
+    {
+      "day": "2026-05-26",
+      "new_agents": 28
+    },
+    {
+      "day": "2026-05-27",
+      "new_agents": 23
+    },
+    {
+      "day": "2026-05-28",
+      "new_agents": 25
+    },
+    {
+      "day": "2026-05-29",
+      "new_agents": 15
+    },
+    {
+      "day": "2026-05-30",
+      "new_agents": 13
+    },
+    {
+      "day": "2026-05-31",
+      "new_agents": 52
+    },
+    {
+      "day": "2026-06-01",
+      "new_agents": 11
+    },
+    {
+      "day": "2026-06-02",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-06-03",
+      "new_agents": 23
+    },
+    {
+      "day": "2026-06-04",
+      "new_agents": 112
+    },
+    {
+      "day": "2026-06-05",
+      "new_agents": 8
+    },
+    {
+      "day": "2026-06-06",
+      "new_agents": 49
+    },
+    {
+      "day": "2026-06-07",
+      "new_agents": 16
+    },
+    {
+      "day": "2026-06-08",
+      "new_agents": 17
+    },
+    {
+      "day": "2026-06-09",
+      "new_agents": 9
+    },
+    {
+      "day": "2026-06-10",
+      "new_agents": 28
+    },
+    {
+      "day": "2026-06-11",
+      "new_agents": 50
+    },
+    {
+      "day": "2026-06-12",
+      "new_agents": 31
+    },
+    {
+      "day": "2026-06-13",
+      "new_agents": 103
+    }
   ],
   "top_owners": [
-    { "owner": "0xd5d6d96fa23455ec5e3c00633f85f364d3f5a291", "agents": 9967, "pct": 28.8 },
-    { "owner": "0xde152afb7db5373f34876e1499fbd893a82dd336", "agents": 1468, "pct": 4.2 },
-    { "owner": "0x5f297b810e27bd54096bcc629e59a2ec152b325c", "agents": 779, "pct": 2.3 },
-    { "owner": "0x4ebac33db635c0c6160cdb0079f26698a93f2ee2", "agents": 639, "pct": 1.8 },
-    { "owner": "0x7f107106a26011017d8fc3aa11320fd0edc3ad6a", "agents": 616, "pct": 1.8 },
-    { "owner": "0x2782f7d6c84cb0393afbbbb03a343da920d45406", "agents": 569, "pct": 1.6 },
-    { "owner": "0x6b0b1c8b5160ecf00372ad11df96e3c861666666", "agents": 501, "pct": 1.4 },
-    { "owner": "0x2da521cf4976a0631c097b73aaee8651f306da9d", "agents": 495, "pct": 1.4 },
-    { "owner": "0x33ee1e099ebdd946a74b644c767419e8c238a6eb", "agents": 430, "pct": 1.2 },
-    { "owner": "0xca0d6c9ef96e0be03c8579fa40c410d14a081807", "agents": 422, "pct": 1.2 }
+    {
+      "owner": "0xd5d6d96fa23455ec5e3c00633f85f364d3f5a291",
+      "agents": 9967,
+      "pct": 28.8
+    },
+    {
+      "owner": "0xde152afb7db5373f34876e1499fbd893a82dd336",
+      "agents": 1468,
+      "pct": 4.2
+    },
+    {
+      "owner": "0x5f297b810e27bd54096bcc629e59a2ec152b325c",
+      "agents": 779,
+      "pct": 2.3
+    },
+    {
+      "owner": "0x4ebac33db635c0c6160cdb0079f26698a93f2ee2",
+      "agents": 639,
+      "pct": 1.8
+    },
+    {
+      "owner": "0x7f107106a26011017d8fc3aa11320fd0edc3ad6a",
+      "agents": 616,
+      "pct": 1.8
+    },
+    {
+      "owner": "0x2782f7d6c84cb0393afbbbb03a343da920d45406",
+      "agents": 569,
+      "pct": 1.6
+    },
+    {
+      "owner": "0x6b0b1c8b5160ecf00372ad11df96e3c861666666",
+      "agents": 501,
+      "pct": 1.4
+    },
+    {
+      "owner": "0x2da521cf4976a0631c097b73aaee8651f306da9d",
+      "agents": 495,
+      "pct": 1.4
+    },
+    {
+      "owner": "0x33ee1e099ebdd946a74b644c767419e8c238a6eb",
+      "agents": 430,
+      "pct": 1.2
+    },
+    {
+      "owner": "0xca0d6c9ef96e0be03c8579fa40c410d14a081807",
+      "agents": 422,
+      "pct": 1.2
+    }
   ],
   "uri_types": [
-    { "type": "empty", "agents": 18049 },
-    { "type": "onchain", "agents": 9520 },
-    { "type": "https", "agents": 4014 },
-    { "type": "other", "agents": 2325 },
-    { "type": "ipfs", "agents": 643 },
-    { "type": "http", "agents": 5 }
+    {
+      "type": "empty",
+      "agents": 18049
+    },
+    {
+      "type": "onchain",
+      "agents": 9520
+    },
+    {
+      "type": "https",
+      "agents": 4014
+    },
+    {
+      "type": "other",
+      "agents": 2325
+    },
+    {
+      "type": "ipfs",
+      "agents": 643
+    },
+    {
+      "type": "http",
+      "agents": 5
+    }
   ],
-  "x402": { "supported": 4389, "unsupported": 2540, "unknown": 2591 },
+  "x402": {
+    "supported": 4389,
+    "unsupported": 2540,
+    "unknown": 2591
+  },
   "reputation_top": [
-    { "agent_id": 10307, "feedback_count": 51, "unique_clients": 44, "avg_score": 109.04 },
-    { "agent_id": 25255, "feedback_count": 23, "unique_clients": 22, "avg_score": 94.91 },
-    { "agent_id": 9765, "feedback_count": 9, "unique_clients": 8, "avg_score": 97.67 },
-    { "agent_id": 13683, "feedback_count": 8, "unique_clients": 8, "avg_score": 96.75 },
-    { "agent_id": 34135, "feedback_count": 9, "unique_clients": 7, "avg_score": 100.0 },
-    { "agent_id": 15681, "feedback_count": 6, "unique_clients": 6, "avg_score": 95.67 },
-    { "agent_id": 2364, "feedback_count": 5, "unique_clients": 5, "avg_score": 95.6 },
-    { "agent_id": 22759, "feedback_count": 4, "unique_clients": 3, "avg_score": 95.5 },
-    { "agent_id": 31964, "feedback_count": 3, "unique_clients": 3, "avg_score": 95.33 },
-    { "agent_id": 22703, "feedback_count": 4, "unique_clients": 3, "avg_score": 95.0 }
+    {
+      "agent_id": 10307,
+      "feedback_count": 51,
+      "unique_clients": 44,
+      "avg_score": 109.04
+    },
+    {
+      "agent_id": 34135,
+      "feedback_count": 9,
+      "unique_clients": 7,
+      "avg_score": 100.0
+    },
+    {
+      "agent_id": 9765,
+      "feedback_count": 9,
+      "unique_clients": 8,
+      "avg_score": 97.67
+    },
+    {
+      "agent_id": 13683,
+      "feedback_count": 8,
+      "unique_clients": 8,
+      "avg_score": 96.75
+    },
+    {
+      "agent_id": 15681,
+      "feedback_count": 6,
+      "unique_clients": 6,
+      "avg_score": 95.67
+    },
+    {
+      "agent_id": 2364,
+      "feedback_count": 5,
+      "unique_clients": 5,
+      "avg_score": 95.6
+    },
+    {
+      "agent_id": 22759,
+      "feedback_count": 4,
+      "unique_clients": 3,
+      "avg_score": 95.5
+    },
+    {
+      "agent_id": 31964,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 95.33
+    },
+    {
+      "agent_id": 22703,
+      "feedback_count": 4,
+      "unique_clients": 3,
+      "avg_score": 95.0
+    },
+    {
+      "agent_id": 22741,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 95.0
+    },
+    {
+      "agent_id": 22745,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 95.0
+    },
+    {
+      "agent_id": 25255,
+      "feedback_count": 23,
+      "unique_clients": 22,
+      "avg_score": 94.91
+    },
+    {
+      "agent_id": 22750,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 94.67
+    },
+    {
+      "agent_id": 22882,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 94.0
+    },
+    {
+      "agent_id": 22776,
+      "feedback_count": 3,
+      "unique_clients": 3,
+      "avg_score": 94.0
+    }
   ]
 }
