@@ -49,6 +49,7 @@ A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for
 - bq/gcloud authed (samuel.walker9@gmail.com); firebase CLI authed; gh authed as cloudonshore.
 
 ## Pointers
+- `docs/ARCHITECTURE.md` — **data pipeline & serving design** (factory→storefront, the 4 steps, cost guardrail, rollout phases). Read before touching the pipeline.
 - `docs/AGENT-ECONOMY-STACK.md` — ERC-8004 / x402 / ERC-8257 / ERC-8183 reference + x402 dashboard methodology.
 - `docs/GCP-EXPLORATION.md` — BigQuery data exploration, cost model, validated findings.
 - `sql/erc8004_queries.sql` — the decoder/metric queries.
