@@ -70,7 +70,8 @@ export default function CardsPage() {
           <p className="mt-2 max-w-2xl text-xs text-muted/70">
             On-chain (inline) cards decode losslessly from the registry. The{" "}
             {fmt(cov.offchain_cards)} cards hosted off-chain (HTTPS/IPFS) are counted below but
-            their content isn&apos;t indexed yet — that&apos;s the next pass.
+            their content isn&apos;t indexed yet — that&apos;s the next pass. A further{" "}
+            {fmt(cov.other_cards)} carry malformed or non-standard data.
           </p>
         </div>
 
@@ -79,7 +80,16 @@ export default function CardsPage() {
           <Stat label="Cards indexed" value={fmt(cov.indexed)} sub="stored fully on-chain" tone="accent" />
           <Stat label="Named & described" value={pct1(comp.description, comp.denominator)} sub={`${fmt(comp.description)} carry a description`} />
           <Stat label="x402-payable" value={fmt(c.x402.payable)} sub={`${pct1(c.x402.payable, cov.indexed)} of indexed cards`} tone="accent" />
-          <Stat label="Real image" value={pct1(comp.image, comp.denominator)} sub={`only ${fmt(comp.image)} carry one`} tone="warn" />
+          {c.interactivity ? (
+            <Stat
+              label="Callable agents"
+              value={fmt(c.interactivity.with_services)}
+              sub="expose a service endpoint"
+              tone="accent"
+            />
+          ) : (
+            <Stat label="Real image" value={pct1(comp.image, comp.denominator)} sub={`only ${fmt(comp.image)} carry one`} tone="warn" />
+          )}
           <Stat label="Declare a trust model" value={fmt(comp.trust)} sub={`${pct1(comp.trust, comp.denominator)} of cards`} tone="warn" />
         </div>
 
@@ -89,7 +99,8 @@ export default function CardsPage() {
             <SegmentBar
               segments={[
                 { label: "On-chain card (indexed)", value: cov.onchain_cards, color: "#34d399" },
-                { label: "Off-chain card (not yet indexed)", value: cov.offchain_cards, color: "#38bdf8" },
+                { label: "Off-chain link (not yet indexed)", value: cov.offchain_cards, color: "#38bdf8" },
+                { label: "Malformed / non-standard", value: cov.other_cards, color: "#f59e0b" },
                 { label: "No card", value: cov.empty, color: "#3f4654" },
               ]}
             />
@@ -116,10 +127,10 @@ export default function CardsPage() {
                 hint="supportedTrust — how the agent expects to be verified"
               />
               <FillBar
-                label="Service endpoints"
-                value={comp.endpoints}
+                label="Callable services"
+                value={comp.services}
                 denominator={comp.denominator}
-                hint="A2A / MCP / wallet links — almost never on-chain"
+                hint="A2A / MCP / web endpoints — the richer ones live off-chain"
               />
             </div>
           </Card>
@@ -194,6 +205,57 @@ export default function CardsPage() {
             </p>
           </Card>
         </div>
+
+        {/* interactability — can you actually call these agents? */}
+        {c.interactivity && (
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <Card title="Can you actually call them?" hint="cards exposing a callable interface">
+              <div className="mb-4 flex items-baseline gap-2">
+                <span className="tabular text-3xl font-semibold text-accent">
+                  {fmt(c.interactivity.with_services)}
+                </span>
+                <span className="text-sm text-muted">
+                  agents expose at least one service endpoint
+                </span>
+              </div>
+              <RankBars
+                rows={[
+                  { label: "A2A (agent-to-agent)", value: c.interactivity.a2a, color: "#a78bfa" },
+                  { label: "web (HTTP service)", value: c.interactivity.web, color: "#38bdf8" },
+                  { label: "MCP (tool server)", value: c.interactivity.mcp, color: "#f59e0b" },
+                ]}
+              />
+              <p className="mt-3 text-xs text-muted">
+                These are the standards you&apos;d use to actually invoke an agent —{" "}
+                <span className="text-foreground">A2A</span> publishes its skills,{" "}
+                <span className="text-foreground">MCP</span> exposes a tool list, and{" "}
+                <span className="text-foreground">web</span> is a plain HTTP endpoint. The
+                interactable agents host their cards off-chain, where the services list fits.
+              </p>
+            </Card>
+            {c.reachability && (
+              <Card title="Off-chain link health" hint={`${fmt(c.reachability.fetched)} links fetched`}>
+                <SegmentBar
+                  segments={[
+                    { label: "Live card returned", value: c.reachability.buckets.ok ?? 0, color: "#34d399" },
+                    { label: "404 / not found", value: c.reachability.buckets.not_found ?? 0, color: "#fb7185" },
+                    { label: "Homepage / not a card", value: c.reachability.buckets.not_a_card ?? 0, color: "#f59e0b" },
+                    { label: "Dead DNS", value: c.reachability.buckets.dns_dead ?? 0, color: "#3f4654" },
+                    { label: "Timeout", value: c.reachability.buckets.timeout ?? 0, color: "#64748b" },
+                    { label: "Server error", value: c.reachability.buckets.server_error ?? 0, color: "#475569" },
+                    { label: "Blocked", value: c.reachability.buckets.blocked ?? 0, color: "#1f2733" },
+                  ].filter((s) => s.value > 0)}
+                />
+                <p className="mt-3 text-xs text-muted">
+                  Of the {fmt(c.reachability.fetched)} off-chain links,{" "}
+                  <span className="text-foreground">{fmt(c.reachability.ok)}</span> returned a live
+                  card. The rest are dead, behind bot-protection, or point at a homepage — a real
+                  measure of how much of the registry is still reachable.
+                </p>
+              </Card>
+            )}
+          </div>
+        )}
 
         <footer className="mt-10 border-t border-border pt-6 text-xs leading-relaxed text-muted">
           <p>

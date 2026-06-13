@@ -45,11 +45,15 @@ rows=[{fields[i]:c.get("v") for i,c in enumerate(r.get("f",[]))} for r in d.get(
 print(json.dumps(rows))'
 }
 
+# Coverage buckets, honest about what's actually indexable:
+#  onchain  = inline base64 card, decoded here for free
+#  offchain = a fetchable https/http/ipfs LINK (content lives off-chain — Phase 2)
+#  other    = present but non-standard (gzip-data, bare text, malformed) — ~2.3k junk
+#  empty    = no card at all
 echo "1/5 coverage (all agents)..."
 run_query "SELECT CASE
    WHEN STARTS_WITH(uri,'data:application/json;base64,') THEN 'onchain'
-   WHEN STARTS_WITH(uri,'https:') OR STARTS_WITH(uri,'http:') THEN 'http'
-   WHEN STARTS_WITH(uri,'ipfs:') THEN 'ipfs'
+   WHEN STARTS_WITH(uri,'https:') OR STARTS_WITH(uri,'http:') OR STARTS_WITH(uri,'ipfs:') THEN 'offchain'
    WHEN uri IS NULL OR uri='' THEN 'empty'
    ELSE 'other' END AS bucket, COUNT(*) AS n
 FROM (SELECT SAFE_CONVERT_BYTES_TO_STRING(FROM_HEX(SUBSTR(data,131,2*SAFE_CAST(CONCAT('0x',SUBSTR(data,67,64)) AS INT64)))) AS uri
@@ -73,7 +77,12 @@ SELECT
   COUNTIF(JSON_VALUE(j,'\$.active')='false') AS active_false,
   COUNTIF(JSON_VALUE(j,'\$.active') IS NULL) AS active_undeclared,
   COUNTIF(JSON_QUERY(j,'\$.supportedTrust') IS NOT NULL) AS has_trust,
-  COUNTIF(JSON_QUERY(j,'\$.endpoints') IS NOT NULL) AS has_endpoints
+  -- interactability: a non-empty services[] = a callable interface. The real schema
+  -- key is 'services' (older cards used 'endpoints'); we accept either.
+  COUNTIF(ARRAY_LENGTH(JSON_QUERY_ARRAY(j,'\$.services'))>0 OR ARRAY_LENGTH(JSON_QUERY_ARRAY(j,'\$.endpoints'))>0) AS has_services,
+  COUNTIF(EXISTS(SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.services')) s WHERE LOWER(JSON_VALUE(s,'\$.name'))='a2a' OR LOWER(JSON_VALUE(s,'\$.endpoint')) LIKE '%agent-card%')) AS svc_a2a,
+  COUNTIF(EXISTS(SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.services')) s WHERE LOWER(JSON_VALUE(s,'\$.name'))='web')) AS svc_web,
+  COUNTIF(EXISTS(SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.services')) s WHERE LOWER(JSON_VALUE(s,'\$.name')) LIKE '%mcp%')) AS svc_mcp
 FROM card" > "$TMP/agg.json"
 
 echo "3/5 trust models..."
@@ -114,7 +123,8 @@ def i(x): return int(x) if x not in (None,"") else 0
 cov = {r["bucket"]: i(r["n"]) for r in load("coverage")}
 total = sum(cov.values())
 onchain = cov.get("onchain",0)
-offchain = cov.get("http",0) + cov.get("ipfs",0) + cov.get("other",0)
+offchain = cov.get("offchain",0)   # fetchable https/http/ipfs links (Phase 2)
+other = cov.get("other",0)         # gzip-data / bare text / malformed
 empty = cov.get("empty",0)
 
 a = load("agg")[0]
@@ -128,18 +138,27 @@ data = {
   "coverage": {
     "agents": total,
     "onchain_cards": onchain,
-    "offchain_cards": offchain,
+    "offchain_cards": offchain,   # fetchable https/http/ipfs links — Phase 2
+    "other_cards": other,         # gzip-data / bare text / malformed
     "empty": empty,
-    "indexed": onchain,        # what THIS file actually decodes (on-chain subset)
-    "parseable": parseable,    # of the indexed cards, how many parsed as JSON
+    "indexed": onchain,           # what THIS file actually decodes (on-chain subset)
+    "parseable": parseable,       # of the indexed cards, how many parsed as JSON
   },
   # completeness among on-chain cards (non-empty values)
   "completeness": {
     "name": i(a["has_name"]),
     "description": i(a["has_descr"]),
     "image": i(a["has_image"]),
-    "endpoints": i(a["has_endpoints"]),
+    "services": i(a["has_services"]),
     "trust": i(a["has_trust"]),
+    "denominator": i(a["onchain"]),
+  },
+  # interactability: on-chain cards exposing a callable interface, by protocol
+  "interactivity_onchain": {
+    "with_services": i(a["has_services"]),
+    "a2a": i(a["svc_a2a"]),
+    "web": i(a["svc_web"]),
+    "mcp": i(a["svc_mcp"]),
     "denominator": i(a["onchain"]),
   },
   "x402": {

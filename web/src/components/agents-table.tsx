@@ -24,6 +24,7 @@ export interface Agent {
   x402: string | null;
   active: string | null;
   trust: string | null;
+  proto: string | null;
   descr: string | null;
 }
 
@@ -36,6 +37,13 @@ const KIND_STYLE: Record<string, string> = {
   ipfs: "bg-violet-400/15 text-violet-300",
   other: "bg-amber-400/15 text-amber-300",
   empty: "bg-border/60 text-muted",
+};
+
+// interaction protocols detected in the card's services[]
+const PROTO_STYLE: Record<string, string> = {
+  a2a: "bg-violet-400/15 text-violet-300",
+  web: "bg-sky-400/15 text-sky-300",
+  mcp: "bg-amber-400/15 text-amber-300",
 };
 
 const col = createColumnHelper<Agent>();
@@ -85,6 +93,26 @@ const columns = [
         <span className="text-[11px] text-muted/40">—</span>
       ),
   }),
+  col.accessor("proto", {
+    header: "Call",
+    filterFn: (row, id, value) => {
+      if (!value) return true;
+      return value === "yes" ? !!row.getValue(id) : !row.getValue(id);
+    },
+    cell: (c) => {
+      const v = c.getValue();
+      if (!v) return <span className="text-[11px] text-muted/40">—</span>;
+      return (
+        <span className="flex flex-wrap gap-1">
+          {v.split(",").map((p) => (
+            <span key={p} className={`rounded px-1 py-0.5 text-[10px] ${PROTO_STYLE[p] ?? "bg-border/60 text-muted"}`}>
+              {p}
+            </span>
+          ))}
+        </span>
+      );
+    },
+  }),
   col.accessor("trust", {
     header: "Trust",
     cell: (c) => {
@@ -127,7 +155,7 @@ const columns = [
 
 // grid template shared by header + rows so columns line up under virtualization
 const GRID =
-  "4.5rem minmax(6.5rem,1.1fr) 8.5rem 4.5rem 3.25rem 4rem 5rem 5rem 6rem minmax(8rem,1.3fr) minmax(8rem,1.4fr)";
+  "4.5rem minmax(6rem,1fr) 7.5rem 4.25rem 3.25rem 3.75rem 5.5rem 4.75rem 4.5rem 5.75rem minmax(7rem,1.2fr) minmax(7rem,1.2fr)";
 
 const KINDS = ["onchain", "https", "ipfs", "other", "empty"];
 
@@ -173,6 +201,7 @@ export function AgentsTable() {
   const kindFilter = (columnFilters.find((f) => f.id === "kind")?.value as string) ?? "";
   const x402Filter = (columnFilters.find((f) => f.id === "x402")?.value as string) ?? "";
   const activeFilter = (columnFilters.find((f) => f.id === "active")?.value as string) ?? "";
+  const protoFilter = (columnFilters.find((f) => f.id === "proto")?.value as string) ?? "";
   const setColFilter = (id: string, value: string) =>
     setColumnFilters((prev) => prev.filter((f) => f.id !== id).concat(value ? [{ id, value }] : []));
 
@@ -224,6 +253,20 @@ export function AgentsTable() {
               key={label}
               onClick={() => setColFilter("active", v)}
               className={`px-2.5 py-2 transition-colors ${activeFilter === v ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-border text-xs">
+          {[
+            ["", "calls: any"],
+            ["yes", "callable"],
+          ].map(([v, label]) => (
+            <button
+              key={label}
+              onClick={() => setColFilter("proto", v)}
+              className={`px-2.5 py-2 transition-colors ${protoFilter === v ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"}`}
             >
               {label}
             </button>

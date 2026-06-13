@@ -78,13 +78,14 @@ export function FillBar({
   denominator: number;
   hint?: string;
 }) {
-  const p = denominator ? (value / denominator) * 100 : 0;
+  const v = value ?? 0;
+  const p = denominator ? (v / denominator) * 100 : 0;
   return (
     <div className="text-sm">
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="text-foreground">{label}</span>
         <span className="tabular text-muted">
-          {fmt(value)} · <span className="text-foreground">{p.toFixed(0)}%</span>
+          {fmt(v)} · <span className="text-foreground">{p.toFixed(0)}%</span>
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-border/40">

@@ -9,6 +9,7 @@ export interface Coverage {
   agents: number;
   onchain_cards: number;
   offchain_cards: number;
+  other_cards: number;
   empty: number;
   indexed: number;
   parseable: number;
@@ -17,9 +18,30 @@ export interface Completeness {
   name: number;
   description: number;
   image: number;
-  endpoints: number;
+  services: number;
   trust: number;
   denominator: number;
+}
+export interface Interactivity {
+  with_services: number;
+  a2a: number;
+  web: number;
+  mcp: number;
+  onchain?: { with_services: number; a2a: number; web: number; mcp: number; denominator: number };
+  offchain?: {
+    reachable: number;
+    with_services: number;
+    a2a: number;
+    web: number;
+    mcp: number;
+    x402: number;
+    active: number;
+  };
+}
+export interface Reachability {
+  fetched: number;
+  ok: number;
+  buckets: Record<string, number>;
 }
 export interface Tri {
   // x402 / active share the same present-true / present-false / undeclared shape
@@ -43,6 +65,8 @@ export interface Cards {
   trust: Bucket[];
   schema: Bucket[];
   image_hosting: Bucket[];
+  interactivity?: Interactivity;
+  reachability?: Reachability;
 }
 
 export const cards = bundled as Cards;

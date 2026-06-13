@@ -47,12 +47,25 @@ SELECT TO_JSON_STRING(ARRAY_AGG(STRUCT(
   -- real link for off-chain cards; null for inline on-chain (decoded below) or empty
   CASE WHEN STARTS_WITH(uri,'data:application/json;base64,') OR uri IS NULL OR uri='' THEN NULL ELSE uri END AS uri,
   SUBSTR(JSON_VALUE(j,'\$.name'),0,40) AS name,
-  (SELECT JSON_VALUE(e,'\$.endpoint') FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.endpoints')) e WHERE JSON_VALUE(e,'\$.name')='ens' LIMIT 1) AS ens,
+  -- self-declared ENS: an 'ens' service, or an ENS binding (services is the real key; older cards used endpoints)
+  COALESCE(
+    (SELECT JSON_VALUE(s,'\$.endpoint') FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.services')) s WHERE LOWER(JSON_VALUE(s,'\$.name'))='ens' LIMIT 1),
+    (SELECT JSON_VALUE(e,'\$.endpoint') FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.endpoints')) e WHERE LOWER(JSON_VALUE(e,'\$.name'))='ens' LIMIT 1),
+    CASE WHEN LOWER(JSON_VALUE(j,'\$.binding.type'))='ens' THEN JSON_VALUE(j,'\$.binding.name') END
+  ) AS ens,
   JSON_VALUE(j,'\$.x402Support') AS x402,
   -- card's self-declared liveness flag (on-chain cards only; null for off-chain/empty)
   JSON_VALUE(j,'\$.active') AS active,
   -- supportedTrust models joined (e.g. 'reputation,tee-attestation'); '' -> null in python
   NULLIF(ARRAY_TO_STRING(ARRAY(SELECT JSON_VALUE(t) FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.supportedTrust')) t),','),'') AS trust,
+  -- callable interfaces detected in services[] -> 'a2a,web,mcp' (the 'how do I call it' signal)
+  NULLIF(ARRAY_TO_STRING(ARRAY(SELECT DISTINCT p FROM (
+    SELECT CASE
+      WHEN LOWER(JSON_VALUE(s,'\$.name'))='a2a' OR LOWER(JSON_VALUE(s,'\$.endpoint')) LIKE '%agent-card%' THEN 'a2a'
+      WHEN LOWER(JSON_VALUE(s,'\$.name')) LIKE '%mcp%' THEN 'mcp'
+      WHEN LOWER(JSON_VALUE(s,'\$.name'))='web' THEN 'web'
+      ELSE NULL END AS p
+    FROM UNNEST(JSON_QUERY_ARRAY(j,'\$.services')) s) WHERE p IS NOT NULL),','),'') AS \`proto\`,
   SUBSTR(JSON_VALUE(j,'\$.description'),0,90) AS descr
 ) ORDER BY id)) AS payload
 FROM card"
@@ -73,7 +86,7 @@ payload = d["rows"][0]["f"][0]["v"]
 agents = json.loads(payload) if payload else []
 # normalize empty strings -> None for cleaner client code
 for a in agents:
-    for k in ("name","ens","x402","active","trust","descr"):
+    for k in ("name","ens","x402","active","trust","proto","descr"):
         if a.get(k) == "": a[k] = None
 data = {"generated_at": day, "network": "ethereum-mainnet", "count": len(agents), "agents": agents}
 json.dump(data, open(out,"w"), separators=(",",":"))

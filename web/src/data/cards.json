@@ -6,7 +6,8 @@
   "coverage": {
     "agents": 34556,
     "onchain_cards": 9520,
-    "offchain_cards": 6987,
+    "offchain_cards": 4662,
+    "other_cards": 2325,
     "empty": 18049,
     "indexed": 9520,
     "parseable": 9515
@@ -15,8 +16,15 @@
     "name": 9507,
     "description": 9482,
     "image": 474,
-    "endpoints": 31,
+    "services": 254,
     "trust": 572,
+    "denominator": 9520
+  },
+  "interactivity_onchain": {
+    "with_services": 254,
+    "a2a": 30,
+    "web": 61,
+    "mcp": 34,
     "denominator": 9520
   },
   "x402": {
@@ -98,5 +106,42 @@
       "host": "inline",
       "n": 7
     }
-  ]
+  ],
+  "interactivity": {
+    "with_services": 2158,
+    "a2a": 1378,
+    "web": 1887,
+    "mcp": 518,
+    "onchain": {
+      "with_services": 254,
+      "a2a": 30,
+      "web": 61,
+      "mcp": 34,
+      "denominator": 9520
+    },
+    "offchain": {
+      "reachable": 2012,
+      "with_services": 1904,
+      "a2a": 1348,
+      "web": 1826,
+      "mcp": 484,
+      "x402": 91,
+      "active": 1937
+    }
+  },
+  "reachability": {
+    "fetched": 4662,
+    "ok": 2012,
+    "buckets": {
+      "not_a_card": 2002,
+      "ok": 2012,
+      "dns_dead": 15,
+      "not_found": 39,
+      "other_error": 15,
+      "server_error": 38,
+      "timeout": 114,
+      "blocked": 421,
+      "private_skipped": 6
+    }
+  }
 }
