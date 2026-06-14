@@ -73,6 +73,7 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
 - **Browser tool (Chrome MCP) is blocked from `etherscan.io`** ("safety restrictions"). Give the user the link, or characterize contracts from BigQuery / the committed ABIs instead.
 
 ## Pointers
+- `docs/TODO.md` — **parked work** (card spec-compliance/validator view, full-standard detection, deeper A2A/OASF skills fetch, off-chain refinements, pre-existing fixes). Authoritative card spec = the **8004scan best-practices validator**: https://best-practices.8004scan.io/docs/01-agent-metadata-standard.html
 - `docs/AGENT-DATA-MODEL.md` — **what the agent data IS** (two stores, card schema, the 3 owner identities + factory, marketplace findings, field provenance, card-indexing plan). Read before card/aggregate work.
 - `docs/ARCHITECTURE.md` — **data pipeline & serving design** (factory→storefront, the 4 steps, cost guardrail, rollout phases). Read before touching the pipeline.
 - `docs/AGENT-ECONOMY-STACK.md` — ERC-8004 / x402 / ERC-8257 / ERC-8183 reference + x402 dashboard methodology.
