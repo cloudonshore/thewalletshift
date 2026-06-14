@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Provider, ServiceCategory } from "@/lib/services";
 import { fmt } from "@/lib/services";
+import { haystack } from "@/lib/haystack";
 
 const PROTO_STYLE: Record<string, string> = {
   a2a: "bg-violet-500/15 text-violet-300 border-violet-500/30",
@@ -21,23 +22,6 @@ function ProtoChip({ p }: { p: string }) {
       {FILTER_LABEL[p] ?? p}
     </span>
   );
-}
-
-// Build the lowercased search haystack once per provider.
-function haystack(p: Provider): string {
-  return [
-    p.name,
-    p.summary,
-    p.descr,
-    p.label,
-    p.ens,
-    ...p.tags,
-    ...p.endpoints.map((e) => e.host),
-    ...p.skills.flatMap((s) => [s.name, ...s.tags]),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
 }
 
 function skillsWord(p: Provider): string {
