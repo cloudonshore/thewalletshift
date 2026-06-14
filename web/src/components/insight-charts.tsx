@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import type { CategoryStat, GrowthPoint } from "@/lib/classified";
 
-const ACCENT = "#34d399"; // real service
+const ACCENT = "#f0531f"; // real service (brand orange)
 const VIOLET = "#a78bfa"; // collectibles / templated
 const GREY = "#3f4654"; // non-callable long tail
 const GRID = "#1a1e26";
@@ -131,9 +131,11 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
 // ---- service categories growth over time (stacked area, togglable) ----------
 // Distinct palette for the ~13 service categories. Click a legend item to drop it
 // from the stack — hiding the dominant DeFi-yield band reveals the smaller ones.
+// Generated from the brand orange by scripts/gen-palette.mjs — hero (index 0) is the
+// true brand color; the rest are a cohesive muted family (constant S/L hue sweep).
 const PALETTE = [
-  "#34d399", "#38bdf8", "#a78bfa", "#f59e0b", "#fb7185", "#22d3ee", "#c084fc",
-  "#4ade80", "#facc15", "#f472b6", "#60a5fa", "#2dd4bf", "#fb923c",
+  "#f0531f", "#7dbed4", "#7d93d4", "#937dd4", "#be7dd4", "#d47dbe", "#d47d93",
+  "#d4937d", "#d4be7d", "#bed47d", "#93d47d", "#7dd493", "#7dd4be",
 ];
 const shortLabel = (l: string) => l.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim();
 
@@ -185,9 +187,9 @@ export function CategoryGrowth({
                 dataKey={c.key}
                 stackId="1"
                 stroke={colorOf(i)}
-                strokeWidth={1}
+                strokeWidth={0.5}
                 fill={colorOf(i)}
-                fillOpacity={0.55}
+                fillOpacity={0.9}
                 isAnimationActive={false}
               />
             )
