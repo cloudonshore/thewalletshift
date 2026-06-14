@@ -44,6 +44,7 @@ Query params (all optional, combine freely):
 | \`category\` | restrict to one category key (see list below) |
 | \`proto\` | \`a2a\` · \`mcp\` · \`web\` — only services exposing that protocol |
 | \`x402\` | \`true\` — only services flagged x402-payable (advisory — see "Paying with x402" below) |
+| \`status\` | \`live\` · \`paywalled\` · \`dead\` — filter by health probe (has an endpoint of that status); advisory, probed periodically, see \`last_probed\` |
 | \`limit\` | page size, 1–100 (default 20) |
 | \`offset\` | pagination offset (default 0) |
 
@@ -69,7 +70,10 @@ Response (abridged):
       "protos": ["a2a", "mcp", "web"],
       "skills_count": 24,
       "endpoints": [
-        { "proto": "a2a", "name": "A2A", "url": "https://emc2ai.io/api/a2a" },
+        {
+          "proto": "a2a", "name": "A2A", "url": "https://emc2ai.io/api/a2a",
+          "health": { "status": "live", "http": 200, "last_probed": "2026-06-14T…", "probe": "challenge" }
+        },
         { "proto": "mcp", "name": "MCP", "url": "https://emc2ai.io/api/mcp" }
       ],
       "detail": "${base}/api/services/22838"
@@ -120,6 +124,16 @@ a service's own stated pricing can be wrong. The only authoritative signal is th
 
 So don't skip an \`x402: true\` service assuming it'll cost, and don't trust a "free"
 label without probing — let the 402 (or 200) tell you the truth.
+
+### Endpoint health
+
+Each endpoint may carry a \`health\` object — a periodic probe snapshot, not a
+guarantee: \`{ status: live | paywalled | dead, http, last_probed, probe }\`.
+\`live\` = it answered (\`2xx\`), \`paywalled\` = it returned \`402\`, \`dead\` = it timed out
+or errored when probed. \`probe: "challenge"\` means we made one minimal real call to
+a safe skill (so \`paywalled\`/free is confirmed); \`"liveness"\` means we only checked
+reachability. Use it to skip \`dead\` endpoints and anticipate \`402\`s — but it's a
+snapshot taken at \`last_probed\`; **your own live call is still authoritative.**
 
 ## Categories
 

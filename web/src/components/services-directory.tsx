@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Provider, ServiceCategory } from "@/lib/services";
-import { fmt } from "@/lib/services";
+import type { Provider, ServiceCategory, EndpointHealth } from "@/lib/services";
+import { fmt, providerHealth } from "@/lib/services";
 import { haystack } from "@/lib/haystack";
 
 const PROTO_STYLE: Record<string, string> = {
@@ -10,9 +10,24 @@ const PROTO_STYLE: Record<string, string> = {
   web: "bg-sky-500/15 text-sky-300 border-sky-500/30",
   mcp: "bg-amber-500/15 text-amber-300 border-amber-500/30",
   x402: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  // endpoint health probe statuses (user opted into these colors for this feature)
+  live: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  paywalled: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  dead: "bg-red-500/15 text-red-300 border-red-500/30",
 };
-const FILTERS = ["a2a", "mcp", "web", "x402"] as const;
-const FILTER_LABEL: Record<string, string> = { a2a: "A2A", mcp: "MCP", web: "web", x402: "x402" };
+// two visually distinct filter groups: protocol/payment vs. the health verdict
+const PROTO_FILTERS = ["a2a", "mcp", "web", "x402"] as const;
+const HEALTH_FILTERS = ["live", "dead"] as const;
+const HEALTH_DOT: Record<string, string> = { live: "bg-emerald-400", dead: "bg-red-400" };
+const FILTER_LABEL: Record<string, string> = {
+  a2a: "A2A",
+  mcp: "MCP",
+  web: "web",
+  x402: "x402",
+  live: "live",
+  paywalled: "paywalled",
+  dead: "dead",
+};
 
 function ProtoChip({ p }: { p: string }) {
   const style = PROTO_STYLE[p];
@@ -24,6 +39,51 @@ function ProtoChip({ p }: { p: string }) {
   );
 }
 
+// a filter toggle chip. Protocol filters read as bordered uppercase tags; health
+// filters (live/dead) get a leading status dot + lowercase so they read as a
+// separate, different kind of filter — not "just another protocol".
+function FilterChip({ f, on, onClick, dot }: { f: string; on: boolean; onClick: () => void; dot?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+        dot ? "lowercase" : "uppercase"
+      } ${on ? PROTO_STYLE[f] : "border-border text-muted hover:border-accent/40"}`}
+    >
+      {dot && <span className={`h-1.5 w-1.5 rounded-full ${on ? HEALTH_DOT[f] : "bg-muted/50"}`} />}
+      {FILTER_LABEL[f]}
+    </button>
+  );
+}
+
+// colored status chip for one endpoint's health probe result (green/amber/red)
+function HealthChip({ health }: { health?: EndpointHealth }) {
+  if (!health) return null;
+  return (
+    <span
+      className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${PROTO_STYLE[health.status]}`}
+      title={`probed ${health.probe} · ${health.last_probed}`}
+    >
+      {health.status}
+      {health.http != null && <span className="ml-1 font-mono opacity-70">{health.http}</span>}
+    </span>
+  );
+}
+
+// row-level one-glance health summary across an endpoint's statuses
+function healthSummary(p: Provider): { live: number; paywalled: number; dead: number; probed: number } {
+  let live = 0,
+    paywalled = 0,
+    dead = 0;
+  for (const e of p.endpoints) {
+    if (e.health?.status === "live") live++;
+    else if (e.health?.status === "paywalled") paywalled++;
+    else if (e.health?.status === "dead") dead++;
+  }
+  return { live, paywalled, dead, probed: live + paywalled + dead };
+}
+
 function skillsWord(p: Provider): string {
   return p.protos.includes("mcp") && !p.protos.includes("a2a") ? "tools" : "skills";
 }
@@ -31,6 +91,7 @@ function skillsWord(p: Provider): string {
 function ProviderRow({ p, onOpen }: { p: Provider; onOpen: () => void }) {
   const protos = [...new Set([...p.protos, ...(p.x402 ? ["x402"] : [])])];
   const hosts = [...new Set(p.endpoints.map((e) => e.host).filter(Boolean))];
+  const hs = healthSummary(p);
   return (
     <li className="border-t border-border/60 first:border-t-0">
       <button
@@ -55,6 +116,18 @@ function ProviderRow({ p, onOpen }: { p: Provider; onOpen: () => void }) {
             {p.skills.length > 0 && (
               <span className="text-accent/80">
                 {p.skills.length} {skillsWord(p)}
+              </span>
+            )}
+            {hs.probed > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                {hs.live > 0 && (
+                  <span className="inline-flex items-center gap-1 text-emerald-400/90">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    {hs.live} live
+                  </span>
+                )}
+                {hs.paywalled > 0 && <span className="text-amber-400/90">{hs.paywalled} paywalled</span>}
+                {hs.dead > 0 && <span className="text-red-400/80">{hs.dead} dead</span>}
               </span>
             )}
             {p.kind === "onchain" && <span className="text-muted/70">on-chain card</span>}
@@ -84,6 +157,7 @@ function ProviderModal({ p, onClose }: { p: Provider; onClose: () => void }) {
   }, [onClose]);
 
   const protos = [...new Set([...p.protos, ...(p.x402 ? ["x402"] : [])])];
+  const lastProbed = p.endpoints.find((e) => e.health)?.health?.last_probed?.slice(0, 10) ?? null;
 
   return (
     <div
@@ -136,6 +210,7 @@ function ProviderModal({ p, onClose }: { p: Provider; onClose: () => void }) {
                 {p.endpoints.map((e) => (
                   <li key={`${e.proto}-${e.url}`} className="flex items-center gap-2 text-xs">
                     <ProtoChip p={e.proto ?? "web"} />
+                    <HealthChip health={e.health} />
                     <a
                       href={e.url}
                       target="_blank"
@@ -147,6 +222,11 @@ function ProviderModal({ p, onClose }: { p: Provider; onClose: () => void }) {
                   </li>
                 ))}
               </ul>
+              {lastProbed && (
+                <p className="mt-1.5 text-[10px] text-muted/60">
+                  Health probed {lastProbed} · advisory snapshot — your own live call is authoritative.
+                </p>
+              )}
             </div>
           )}
 
@@ -200,7 +280,12 @@ export function ServicesDirectory({
     setProtos((prev) => {
       const next = new Set(prev);
       if (next.has(f)) next.delete(f);
-      else next.add(f);
+      else {
+        // live/dead are a single provider-level verdict — mutually exclusive
+        if (f === "live") next.delete("dead");
+        if (f === "dead") next.delete("live");
+        next.add(f);
+      }
       return next;
     });
 
@@ -210,7 +295,13 @@ export function ServicesDirectory({
       .filter(({ p, hay }) => {
         if (cat && p.category !== cat) return false;
         for (const f of protos) {
-          if (f === "x402" ? !p.x402 : !p.protos.includes(f)) return false;
+          if (f === "x402") {
+            if (!p.x402) return false;
+          } else if (f === "live" || f === "dead") {
+            if (providerHealth(p) !== f) return false;
+          } else if (!p.protos.includes(f)) {
+            return false;
+          }
         }
         return tokens.every((t) => hay.includes(t));
       })
@@ -268,21 +359,13 @@ export function ServicesDirectory({
             />
           </div>
           <div className="flex items-center gap-1.5">
-            {FILTERS.map((f) => {
-              const on = protos.has(f);
-              return (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => toggleProto(f)}
-                  className={`rounded-md border px-2.5 py-1.5 text-xs font-medium uppercase transition-colors ${
-                    on ? PROTO_STYLE[f] : "border-border text-muted hover:border-accent/40"
-                  }`}
-                >
-                  {FILTER_LABEL[f]}
-                </button>
-              );
-            })}
+            {PROTO_FILTERS.map((f) => (
+              <FilterChip key={f} f={f} on={protos.has(f)} onClick={() => toggleProto(f)} />
+            ))}
+            <span className="mx-1 h-5 w-px self-center bg-border" aria-hidden="true" />
+            {HEALTH_FILTERS.map((f) => (
+              <FilterChip key={f} f={f} on={protos.has(f)} onClick={() => toggleProto(f)} dot />
+            ))}
           </div>
         </div>
 

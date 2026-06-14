@@ -9,9 +9,10 @@
 //
 // Reads:  enrichment.json (category/tags/summary), enrich-input.json (name/descr/
 //         services[]/protos), skills.json (live A2A skills + MCP tools),
-//         agents.json (x402 flag, ens, reg date), taxonomy.json (tier per category)
+//         agents.json (x402 flag, ens, reg date), taxonomy.json (tier per category),
+//         health.json (optional — per-endpoint liveness probe, scripts/probe-health.mjs)
 // Writes: web/src/data/services.json  (committed, bundled by the app)
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const D = "web/src/data";
 const J = (f) => JSON.parse(readFileSync(`${D}/${f}`, "utf8"));
@@ -20,6 +21,14 @@ const input = J("enrich-input.json");
 const skills = J("skills.json");
 const agentsDoc = J("agents.json");
 const tax = J("taxonomy.json");
+// health.json is an optional, gitignored intermediate; fold it in if a probe has run
+const health = existsSync(`${D}/health.json`) ? J("health.json") : null;
+const healthBy = new Map(
+  (health?.records || []).map((r) => [
+    `${r.id}|${(r.url || "").trim()}`,
+    { status: r.status, http: r.http ?? null, last_probed: r.last_probed, probe: r.probe },
+  ])
+);
 
 const catMeta = new Map(tax.categories.map((c) => [c.key, c]));
 const serviceKeys = new Set(tax.categories.filter((c) => c.tier === "service").map((c) => c.key));
@@ -36,6 +45,16 @@ const hostOf = (url) => {
     return (url || "").replace(/^https?:\/\//, "").split("/")[0] || null;
   }
 };
+// health only applies to HTTP(S) endpoints — ENS names / CAIP-10 on-chain refs
+// are identifiers, not callable endpoints, so they carry no health verdict.
+const isHttp = (url) => {
+  try {
+    const p = new URL(url).protocol;
+    return p === "http:" || p === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // dedupe endpoints by proto+url, keep a short host for display
 function endpointsOf(inp) {
@@ -46,7 +65,10 @@ function endpointsOf(inp) {
     const key = `${s.proto}|${url}`;
     if (!url || seen.has(key)) continue;
     seen.add(key);
-    out.push({ proto: s.proto, name: s.name || s.proto, url, host: hostOf(url) });
+    const ep = { proto: s.proto, name: s.name || s.proto, url, host: hostOf(url) };
+    const h = isHttp(url) ? healthBy.get(`${inp.id}|${url}`) : null;
+    if (h) ep.health = h;
+    out.push(ep);
   }
   return out;
 }
@@ -107,12 +129,20 @@ const categories = tax.categories
   .map((c) => ({ key: c.key, label: c.label, definition: c.definition, count: counts.get(c.key) || 0 }))
   .sort((a, b) => b.count - a.count);
 
+// per-endpoint health rollup (only meaningful once a probe has run)
+const byStatus = { live: 0, paywalled: 0, dead: 0 };
+for (const p of providers)
+  for (const e of p.endpoints) if (e.health) byStatus[e.health.status] = (byStatus[e.health.status] || 0) + 1;
+const probedEndpoints = byStatus.live + byStatus.paywalled + byStatus.dead;
+
 const out = {
   generated_at: enrich.generated_at,
   network: "ethereum-mainnet",
   total: providers.length,
   with_skills: providers.filter((p) => p.skills.length).length,
   x402: providers.filter((p) => p.x402).length,
+  last_probed: health?.generated_at || null,
+  health: probedEndpoints ? byStatus : null,
   protos: {
     a2a: providers.filter((p) => p.protos.includes("a2a")).length,
     mcp: providers.filter((p) => p.protos.includes("mcp")).length,
@@ -123,5 +153,8 @@ const out = {
 };
 writeFileSync(`${D}/services.json`, JSON.stringify(out));
 console.log(
-  `services.json: ${providers.length} service providers · ${out.with_skills} with live skills · ${out.x402} x402 · ${categories.length} categories`
+  `services.json: ${providers.length} service providers · ${out.with_skills} with live skills · ${out.x402} x402 · ${categories.length} categories` +
+    (probedEndpoints
+      ? ` · health ${byStatus.live} live / ${byStatus.paywalled} paywalled / ${byStatus.dead} dead`
+      : " · no health probe folded in")
 );
