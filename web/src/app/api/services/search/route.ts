@@ -6,10 +6,11 @@
 //   category one of services.categories[].key
 //   proto    a2a | mcp | web   (only services exposing that protocol)
 //   x402     true|1            (only x402-payable services)
+//   status   live|paywalled|dead (by health probe — has an endpoint of that status)
 //   limit    1..100 (default 20)
 //   offset   pagination offset (default 0)
 import { searchProviders } from "@/lib/directory-search";
-import { services } from "@/lib/services";
+import { services, type HealthStatus } from "@/lib/services";
 import { apiJson, baseUrl, preflight } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,11 @@ export function GET(request: Request) {
   const proto = sp.get("proto") ?? undefined;
   const x402raw = sp.get("x402");
   const x402 = x402raw === "true" || x402raw === "1";
+  const statusRaw = sp.get("status");
+  const status =
+    statusRaw === "live" || statusRaw === "paywalled" || statusRaw === "dead"
+      ? (statusRaw as HealthStatus)
+      : undefined;
   const limitRaw = sp.get("limit");
   const offsetRaw = sp.get("offset");
 
@@ -33,13 +39,14 @@ export function GET(request: Request) {
     category,
     proto,
     x402,
+    status,
     limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
     offset: offsetRaw ? parseInt(offsetRaw, 10) || undefined : undefined,
   });
 
   const base = baseUrl(request);
   return apiJson({
-    query: { q: q ?? null, category: category ?? null, proto: proto ?? null, x402 },
+    query: { q: q ?? null, category: category ?? null, proto: proto ?? null, x402, status: status ?? null },
     total: result.total,
     count: result.count,
     limit: result.limit,

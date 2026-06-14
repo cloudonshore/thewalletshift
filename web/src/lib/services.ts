@@ -7,11 +7,19 @@ import servicesJson from "@/data/services.json";
 
 export type Proto = "a2a" | "mcp" | "web";
 
+export type HealthStatus = "live" | "paywalled" | "dead";
+export interface EndpointHealth {
+  status: HealthStatus;
+  http: number | null;
+  last_probed: string;
+  probe: "liveness" | "challenge";
+}
 export interface Endpoint {
   proto: string | null;
   name: string;
   url: string;
   host: string | null;
+  health?: EndpointHealth;
 }
 export interface Skill {
   name: string;
@@ -46,6 +54,8 @@ export interface ServicesDoc {
   total: number;
   with_skills: number;
   x402: number;
+  last_probed: string | null;
+  health: { live: number; paywalled: number; dead: number } | null;
   protos: { a2a: number; mcp: number; web: number };
   categories: ServiceCategory[];
   providers: Provider[];
