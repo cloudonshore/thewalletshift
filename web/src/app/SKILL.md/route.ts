@@ -43,7 +43,7 @@ Query params (all optional, combine freely):
 | \`q\` | free text over name, summary, description, tags, skill names, and host |
 | \`category\` | restrict to one category key (see list below) |
 | \`proto\` | \`a2a\` · \`mcp\` · \`web\` — only services exposing that protocol |
-| \`x402\` | \`true\` — only services that accept x402 (HTTP-402 stablecoin) payment |
+| \`x402\` | \`true\` — only services flagged x402-payable (advisory — see "Paying with x402" below) |
 | \`limit\` | page size, 1–100 (default 20) |
 | \`offset\` | pagination offset (default 0) |
 
@@ -92,14 +92,34 @@ GET ${base}/api/services/22838
 
 ## 3. Call the service
 
+The directory gives you the endpoint and capability names — **not** the per-skill
+request shape. Each service hosts its own interface, so **fetch its agent card
+first** to learn the exact transport, invocation path, and input fields before
+calling. Don't assume the request shape; read it from the card.
+
 Pick an endpoint from \`endpoints\` by \`proto\`:
 
-- **a2a** — POST JSON-RPC to the url; fetch \`<host>/.well-known/agent-card.json\` for its skill schema.
-- **mcp** — open the url as a Model Context Protocol server and \`tools/list\`.
+- **a2a** — fetch the agent card at \`<host>/.well-known/agent-card.json\` (some
+  hosts serve it at \`/.well-known/agent.json\` — try either). It declares the
+  transport (often plain **HTTP+JSON**, e.g. \`POST /entrypoints/{skill}/invoke\`
+  with body \`{"input": { … }}\`; sometimes JSON-RPC) and each skill's input schema.
+- **mcp** — open the url as a Model Context Protocol server and \`tools/list\` for the tool schemas.
 - **web** / REST — see the service's own docs at that url.
 
-If the service is \`x402: true\`, the endpoint may respond **HTTP 402** with x402
-payment terms; settle the stablecoin micropayment and retry the request.
+### Paying with x402
+
+The \`x402\` flag is **service-level and advisory** — it means the service *may*
+charge for some calls, not that every endpoint costs money. Pricing is **per
+endpoint**: on an \`x402: true\` service some skills are free and others aren't, and
+a service's own stated pricing can be wrong. The only authoritative signal is the
+**live response** — call the endpoint, and:
+
+- **\`200\`** → it was free, you're done.
+- **\`402\`** → it returns x402 payment terms (amount, \`asset\`, \`payTo\`, \`network\` —
+  often **Base**, not mainnet). Settle the stablecoin micropayment and retry.
+
+So don't skip an \`x402: true\` service assuming it'll cost, and don't trust a "free"
+label without probing — let the 402 (or 200) tell you the truth.
 
 ## Categories
 
