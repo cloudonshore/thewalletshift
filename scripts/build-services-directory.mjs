@@ -37,6 +37,8 @@ const skillsById = new Map((skills.agents || skills).map((s) => [s.id, s]));
 const x402By = new Map(agentsDoc.agents.map((a) => [a.id, String(a.x402).toLowerCase() === "true"]));
 const ensBy = new Map(agentsDoc.agents.map((a) => [a.id, a.ens || null]));
 const regBy = new Map(agentsDoc.agents.map((a) => [a.id, a.reg || null]));
+// current on-chain NFT owner — the address we verify a claimed ENS name against
+const ownerBy = new Map(agentsDoc.agents.map((a) => [a.id, a.owner || null]));
 
 const hostOf = (url) => {
   try {
@@ -107,6 +109,7 @@ for (const c of enrich.agents) {
     protos: inp.protos || [],
     x402: !!x402By.get(c.id),
     ens: ensBy.get(c.id),
+    owner: ownerBy.get(c.id), // current NFT owner (for live ENS verification)
     reg: regBy.get(c.id),
     endpoints: eps,
     skills: sk,
