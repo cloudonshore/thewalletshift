@@ -96,12 +96,6 @@ export default async function Home() {
               Cards
             </a>
             <a
-              href="/explore"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
-            >
-              Explore
-            </a>
-            <a
               href="https://blog.thewalletshift.com"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >

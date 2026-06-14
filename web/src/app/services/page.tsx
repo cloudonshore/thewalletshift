@@ -26,7 +26,6 @@ function Nav() {
     ["/agents", "Agents"],
     ["/services", "Services"],
     ["/cards", "Cards"],
-    ["/explore", "Explore"],
     ["https://blog.thewalletshift.com", "Blog"],
   ];
   return (
