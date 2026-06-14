@@ -78,28 +78,16 @@ export default async function Home() {
             <span className="hidden sm:inline">Ethereum mainnet</span>
             <span className="tabular hidden sm:inline">as of {m.generated_at}</span>
             <a
-              href="/agents"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+              href="/"
+              className="rounded-md border border-accent/50 px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
-              Agents
+              Home
             </a>
             <a
               href="/services"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
               Services
-            </a>
-            <a
-              href="/cards"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
-            >
-              Cards
-            </a>
-            <a
-              href="https://blog.thewalletshift.com"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
-            >
-              Blog
             </a>
           </div>
         </div>

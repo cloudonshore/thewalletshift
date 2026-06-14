@@ -5,10 +5,8 @@ import { taxonomy } from "@/lib/classified";
 
 function Nav() {
   const links = [
-    ["/agents", "Agents"],
+    ["/", "Home"],
     ["/services", "Services"],
-    ["/cards", "Cards"],
-    ["https://blog.thewalletshift.com", "Blog"],
   ];
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
