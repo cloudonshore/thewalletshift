@@ -38,6 +38,7 @@ export interface Provider {
   protos: string[];
   x402: boolean;
   ens: string | null;
+  owner: string | null; // current on-chain NFT owner — verified against the ENS name
   reg: string | null;
   endpoints: Endpoint[];
   skills: Skill[];

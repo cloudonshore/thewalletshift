@@ -88,6 +88,112 @@ function skillsWord(p: Provider): string {
   return p.protos.includes("mcp") && !p.protos.includes("a2a") ? "tools" : "skills";
 }
 
+const shortAddr = (a: string | null) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : "");
+
+// Live, on-chain ENS verification (see lib/ens.ts + /api/ens). Agents self-declare
+// an ENS name in their card; this resolves it live on mainnet when the modal opens
+// (no baked values) and grades it against the agent's owner address.
+type EnsResult = {
+  name: string;
+  status: "verified" | "mismatch" | "unconfigured" | "invalid" | "error";
+  resolved_address: string | null;
+  owner: string | null;
+  owner_match: boolean;
+  primary_name: string | null;
+  primary_match: boolean;
+  records: { key: string; value: string }[];
+};
+const ENS_STATUS_STYLE: Record<EnsResult["status"], string> = {
+  verified: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  mismatch: "bg-red-500/15 text-red-300 border-red-500/30",
+  unconfigured: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  invalid: "bg-border/60 text-muted border-border",
+  error: "bg-border/60 text-muted border-border",
+};
+const ENS_STATUS_LABEL: Record<EnsResult["status"], string> = {
+  verified: "ENS verified",
+  mismatch: "ENS mismatch",
+  unconfigured: "ENS unconfigured",
+  invalid: "invalid name",
+  error: "lookup failed",
+};
+
+function EnsVerification({ name, owner }: { name: string; owner: string | null }) {
+  const [r, setR] = useState<EnsResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    const url = `/api/ens?name=${encodeURIComponent(name)}${owner ? `&address=${owner}` : ""}`;
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => alive && setR(data))
+      .catch(() => alive && setR(null))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [name, owner]);
+
+  return (
+    <div className="mb-4">
+      <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted">
+        ENS identity
+        <span className="font-mono normal-case text-accent/80">{name}</span>
+      </div>
+      <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+        {loading || !r ? (
+          <div className="text-xs text-muted">{loading ? "Resolving on-chain…" : "Lookup unavailable."}</div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded border px-2 py-0.5 text-[11px] font-medium ${ENS_STATUS_STYLE[r.status]}`}>
+                {ENS_STATUS_LABEL[r.status]}
+              </span>
+              {r.primary_match && <span className="text-[10px] text-emerald-400/90">primary name set ✓</span>}
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">
+              {r.status === "verified" &&
+                `Resolves on-chain to the agent's owner ${shortAddr(r.owner)} — verified identity.`}
+              {r.status === "mismatch" &&
+                `Claimed name resolves to ${shortAddr(r.resolved_address)}, not the agent's owner ${shortAddr(
+                  r.owner,
+                )} — unverified claim.`}
+              {r.status === "unconfigured" && "Name has no address record set on-chain — claimed but not wired up."}
+              {(r.status === "invalid" || r.status === "error") &&
+                "Could not resolve this name on Ethereum mainnet."}
+            </p>
+            {r.records.length > 0 && (
+              <dl className="mt-2 grid gap-1 text-[11px]">
+                {r.records.map((rec) => (
+                  <div key={rec.key} className="flex gap-2">
+                    <dt className="w-20 shrink-0 font-mono text-muted/70">{rec.key}</dt>
+                    <dd className="min-w-0 truncate text-foreground/80">
+                      {/^https?:\/\//.test(rec.value) ? (
+                        <a
+                          href={rec.value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent hover:underline"
+                        >
+                          {rec.value}
+                        </a>
+                      ) : (
+                        rec.value
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <p className="mt-2 text-[10px] text-muted/50">Resolved live on Ethereum mainnet via ENS.</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProviderRow({ p, onOpen }: { p: Provider; onOpen: () => void }) {
   const protos = [...new Set([...p.protos, ...(p.x402 ? ["x402"] : [])])];
   const hosts = [...new Set(p.endpoints.map((e) => e.host).filter(Boolean))];
@@ -202,6 +308,8 @@ function ProviderModal({ p, onClose }: { p: Provider; onClose: () => void }) {
           {(p.descr || p.summary) && (
             <p className="mb-4 text-sm leading-relaxed text-foreground/80">{p.descr || p.summary}</p>
           )}
+
+          {p.ens && <EnsVerification name={p.ens} owner={p.owner} />}
 
           {p.endpoints.length > 0 && (
             <div className="mb-4">

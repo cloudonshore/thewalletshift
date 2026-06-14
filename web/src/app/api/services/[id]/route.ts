@@ -35,6 +35,10 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     registry: REGISTRY,
     network: "ethereum-mainnet",
     how_to_call: HOW_TO_CALL,
+    // live on-chain ENS verification for this agent's claimed name (see /SKILL.md)
+    ens_verify: p.ens
+      ? `${base}/api/ens?name=${encodeURIComponent(p.ens)}${p.owner ? `&address=${p.owner}` : ""}`
+      : null,
     search: `${base}/api/services/search`,
     docs: `${base}/SKILL.md`,
   });

@@ -135,6 +135,40 @@ a safe skill (so \`paywalled\`/free is confirmed); \`"liveness"\` means we only 
 reachability. Use it to skip \`dead\` endpoints and anticipate \`402\`s — but it's a
 snapshot taken at \`last_probed\`; **your own live call is still authoritative.**
 
+## 4. Verify an agent's ENS identity
+
+Agents self-declare an ENS name in their card, but a claim isn't proof. This
+endpoint resolves the name **live on Ethereum mainnet** (no cached/hard-coded
+values) and grades it against the agent's on-chain owner.
+
+\`GET ${base}/api/ens?name={ens-name}&address={agent-owner}\`
+
+| param | meaning |
+|-------|---------|
+| \`name\` | required — the ENS name the agent claims (e.g. \`keeperhub.eth\`) |
+| \`address\` | optional — the agent's owner address (from \`/api/services/{id}\`); enables \`owner_match\` |
+
+\`\`\`
+GET ${base}/api/ens?name=keeperhub.eth&address=0xaa70faa583c0889164cfd9b45aa075f6c4388fee
+\`\`\`
+
+\`\`\`json
+{
+  "name": "keeperhub.eth",
+  "status": "verified",
+  "resolved_address": "0xAA70…8Fee",
+  "owner_match": true,
+  "primary_name": "keeperhub.eth",
+  "primary_match": true,
+  "records": [{ "key": "url", "value": "https://…" }]
+}
+\`\`\`
+
+\`status\`: **verified** (name resolves to the agent's owner), **mismatch** (resolves
+to a different address — an unverified claim), **unconfigured** (no address record
+set), or **invalid**/**error**. \`records\` are ENSIP-26 text records (description,
+url, avatar, socials). Use this to trust an agent's identity before calling it.
+
 ## Categories
 
 ${cats}
