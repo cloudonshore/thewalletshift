@@ -6,10 +6,11 @@
 A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for agents"), built on **ERC-8004** registries on Ethereum mainnet. Hosted at **thewalletshift.com**. Built for ETHGlobal NY 2026 (target prizes: Google Cloud + ENS). Companion content on **blog.thewalletshift.com** (Substack).
 
 ## Repo layout
-- `web/` — Next.js 15 app (the dashboard). App Router, TypeScript, Tailwind, Recharts.
+- `web/` — Next.js 15 app. App Router, TS, Tailwind, Recharts, TanStack Table+Virtual. Pages: `/` (dashboard), `/agents` (virtualized browser of all 34.5k), `/services` (**LLM-classified analytics of the callable agents — what they actually do**), `/cards` (Agent Card analytics + interactability), `/explore` (event-types + sample). Routes: `/api/agents` (serves full set from GCS via `web/src/lib/gcs.ts`).
 - `sql/` — validated BigQuery query library (`erc8004_queries.sql`).
-- `scripts/` — `export-metrics.sh` (BigQuery → `web/src/data/metrics.json`).
-- `docs/` — detailed reference (agent-economy stack, BigQuery exploration findings).
+- `scripts/` — BQ→JSON exports: `export-metrics.sh` (dashboard), `export-explorer.sh` (`/explore`), `export-agents.sh` (full table → GCS), `export-cards.sh` (on-chain card analytics → `cards.json`); **off-chain card pipeline** `export-offchain-uris.sh` (BQ worklist) → `fetch-cards.mjs` (Node HTTP fetch+parse; BQ can't egress) → `merge-cards.mjs` (fold into `agents.json`/`cards.json`); **classification pipeline** (see below) `export-onchain-callable.sh` + `fetch-cards.mjs` → `build-enrich-input.mjs` → `fetch-skills.mjs` (2nd-hop A2A skills/MCP tools) → `build-corpus.mjs` → taxonomy-discovery + classify-agents **Workflows** → `build-classified.mjs`; plus `explore.sh '<SQL>'` ad-hoc runner.
+- `abis/` — authoritative compiled contract ABIs (decode source-of-truth; see `abis/README.md`).
+- `docs/` — detailed reference (architecture, **agent data model**, agent-economy stack, BigQuery findings).
 - internal strategy docs (PRIZES.md, SUBMISSION.md, strategy.md, compass_*) are **gitignored** — local only.
 
 ## Git workflow (IMPORTANT)
@@ -31,24 +32,51 @@ A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for
 - Untouched: `CNAME blog → substack`, `CNAME www → thewalletshift.com`, NS records.
 - Verify DNS: `dig @ns47.domaincontrol.com +short thewalletshift.com A`
 
-## Data pipeline
-- **Now (Stage 1):** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → queries BigQuery → writes `web/src/data/metrics.json`, which the dashboard imports. Real data, no Firebase dependency.
-- **Later (Stage 2):** same SQL as scheduled BigQuery rollups → Firestore (BQ→Firestore extension) → frontend reads Firestore live; + Cloud Run `/api/live-query` for the on-stage demo. Keep the JSON shape stable so the frontend swap is one file (`web/src/lib/metrics.ts`).
+## Data pipeline — see `docs/ARCHITECTURE.md` for the full design + rollout phases
+Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never query BQ from the app.
+- **Refresh data:** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → writes `web/src/data/metrics.json`, then upload it: `gcloud storage cp web/src/data/metrics.json gs://thewalletshift-data/metrics.json --project=thewalletshift --cache-control="public, max-age=300"`.
+- **Serving (Phase 1, live):** the app reads `gs://thewalletshift-data/metrics.json` at runtime via `getMetrics()` in `web/src/lib/metrics.ts` — authenticated with the App Hosting SA `firebase-app-hosting-compute@thewalletshift.iam.gserviceaccount.com` (has `objectViewer` on that bucket) via the GCE metadata server. Rendered through ISR. The bundled JSON in the repo is the offline/build fallback. Bucket is **private** (no public access).
+- **Freshness:** a GCS write self-surfaces within ~6h (Next data-cache `revalidate`). For instant refresh, build the Phase 1.5 `POST /api/revalidate` webhook; a redeploy also clears the cache. **Do NOT make the bucket public** to "fix" staleness — that's not the cause.
+- **Data objects in `gs://thewalletshift-data` (private):** `metrics.json` (dashboard — server-side ISR fetch in `lib/metrics.ts`) · `agents.json` (full 34.5k table, ~8.5 MB with card + off-chain fields — client-fetched via the `/api/agents` route, which reads GCS through `lib/gcs.ts` in prod and a gitignored local copy in dev; regen via `export-agents.sh` then `merge-cards.mjs`, **re-upload after merge**). `explorer.json` and `cards.json` (card analytics for `/cards`) are small and bundled in-repo, as are **`taxonomy.json`** (the 16-category taxonomy), **`enrichment.json`** (per-agent classification) and **`classified.json`** (the `/services` aggregates). `offchain-uris.json`/`offchain-cards.json` and the classification intermediates (`onchain-callable.json`, `enrich-input.json`, `skills.json`, `corpus.json`, `_disc/`, `_cls/`) are gitignored.
+- **Next (Phase 2):** the 6 queries as BQ Scheduled Queries → `metrics_*` tables → `EXPORT DATA` to the bucket → cron. Firestore is deferred to per-agent profile pages only, not the dashboard.
 
 ## BigQuery facts
 - Project `thewalletshift`, dataset `erc8004`, **query the materialized table `thewalletshift.erc8004.logs_2026`** (95 MB, free) — NOT the 3 TB public table.
-- Public source: `bigquery-public-data.goog_blockchain_ethereum_mainnet_us.logs` (US, partitioned by month; Base NOT available).
+- Public source: `bigquery-public-data.goog_blockchain_ethereum_mainnet_us.logs` (US, partitioned by month; Base/L2s NOT available).
 - Registries: Identity `0x8004a169fb4a3325136eb29fa0ceb6d2e539a432` · Reputation `0x8004baa17c55a88189ae136b182e5fda19de9b63`.
-- Event sigs (topics[0]): Registered `0xca52e62c…` · NewFeedback `0x6a4a6174…` · Transfer `0xddf252ad…`.
+- **Coverage confirmed (2026-06-13):** table holds BOTH registries, mainnet, full history — Identity 156,269 rows (Jan 29→Jun 13), Reputation 3,215 rows (Jan 29→Jun 12). No stray addresses. Reconciles to 159,484.
+- **SCOPE = Ethereum mainnet only (locked).** Same 2 addresses are deterministically deployed on Base/Arbitrum/Avalanche/BSC/Abstract too, and most agent *volume* is on the cheap L2s — but those chains aren't in BigQuery public data, so multi-chain would need a separate indexer. Mainnet-only is a deliberate *feature*: "these agents paid real gas → higher-signal, less Sybil."
+- **ValidationRegistry** (3rd pillar of the standard) exists in the contracts repo but is **deployed nowhere** (no address on any chain). Watch item: add it when it goes live on mainnet.
+- **Authoritative ABIs:** committed at `abis/{Identity,Reputation,Validation}Registry.json` (copied from the official repo's compiled `abis/`). ALWAYS decode against these, not hand-read `.sol` `event` lines — the compiled ABI includes inherited events (ERC-4906, OZ) the source files don't declare. These are UUPS proxies → impls Identity `0x7274e874…` / Reputation `0x16e0fa7f…` (upgraded only at launch, stable since).
+- **Event signatures (topics[0], full map verified via keccak vs the compiled ABI — every signature in the table is accounted for, zero leftovers):**
+  - Identity: `Registered` 0xca52e62c (34,556) · `MetadataSet` 0x2c149ed5 (52,789, *liveness signal — edits > registrations*) · `Transfer` 0xddf252ad (49,305) · `MetadataUpdate` 0xf8e1a15a (17,943 — **inherited ERC-4906** ping, fires when a URI is set/changed) · `URIUpdated` 0x3a2c7fff (1,365) · `ApprovalForAll` 0x17307eab (303) · `Approval`/`Initialized`/`Upgraded`/`OwnershipTransferred` (1–3 each, plumbing)
+  - Reputation: `NewFeedback` 0x6a4a6174 (3,173) · `ResponseAppended` 0xb1c6be0b (37) · `FeedbackRevoked` 0x25156fd3 (**0 — nobody revokes reviews**)
+  - In ABI but never fired: `BatchMetadataUpdate`, `EIP712DomainChanged`, `FeedbackRevoked`.
 - Headline metrics (2026-06-13): 34,556 agents · 8,143 owners (top=28.8%) · 52% empty · 4,389 x402-payable. See `docs/GCP-EXPLORATION.md`.
+- **Exploration tools:** `scripts/explore.sh '<SQL>'` (ad-hoc, `\`T\`` = the table, prints bytes/cache; `-n` = dry-run cost) · `export-explorer.sh` → `explorer.json` · `export-agents.sh` → `agents.json` (full table, current owner) → GCS.
+
+## Agent data model (CRITICAL — full detail in `docs/AGENT-DATA-MODEL.md`)
+- **Two separate stores per agent, don't conflate:** (A) the **`agentURI` / Agent Card** — one string, inline `data:base64` card OR `https`/`ipfs` link OR empty; holds `{name, description, image, services:[{name,endpoint}], active, x402Support, supportedTrust}`. (B) the **on-chain metadata map** (`MetadataSet` event, `key→bytes`) — dominated by the reserved `agentWallet` key (auto-set every registration).
+- ⚠️ **Callable interfaces live under `services`, NOT `endpoints`** (older cards use `endpoints`; accept either). Each is `{name, endpoint, type?}` → `name:"A2A"|"web"|"MCP"`. This is the "how do I call/pay the agent" signal. **~2,158 agents expose a callable service** (A2A ~1,378 · web ~1,887 · MCP ~518) — the honest interactable count vs 34.5k raw mints. On-chain only 224 have services; the rest host their card off-chain.
+- **Three different "owner" addresses** that diverge: registration owner (`Registered.owner`) vs **current NFT owner** (latest `Transfer.to`) vs **agentWallet** (operating wallet, store B). 37% have current owner ≠ agentWallet.
+- ⚠️ **"Top owner 28.8%" is a MINT-FACTORY contract** `0xd5d6d96f…a291` (minted 9,967 to itself, distributed all, holds ~0). **Concentration should use CURRENT owner**; the dashboard's `metrics.json` still uses registration owner (known fix).
+- **ENS is self-declared in the card, NOT verified** against the ENS registry (real ENS resolution = a prize-worthy upgrade). `kind` (onchain/https/ipfs/empty) is **derived by us** from the URI prefix, not an on-chain field.
+- **Card indexing (BUILT):** on-chain cards (9,520) decode in SQL for **free** (`export-cards.sh`); off-chain `https`/`ipfs` (4,662) fetched by `fetch-cards.mjs` (BQ **cannot egress** — Node fetches, runs locally today, promote to Cloud Run Job for cron). ~2,012/4,662 links return a live card (43%). ⚠️ **`ag0.xyz` = 1,985 off-chain agents all point at the bare homepage** (placeholder spam, 43% of off-chain). 52% of all agents have no card.
+- **Real marketplace activity exists but is minor:** 361 Seaport/OpenSea sale txns; most secondary movement is the factory batch-distributing. TODO: pull Seaport sale prices to size the real market.
+- **Service classification (BUILT — powers `/services`):** the **2,037 callable** agents (expose an a2a/mcp/web service) were enriched with a **second-hop fetch** (`fetch-skills.mjs`: A2A `/.well-known/agent-card.json` skills + best-effort MCP `tools/list` — 605 reachable), then **classified by LLM subagents** (two **Workflows**: emergent taxonomy discovery → user-approved **16-category taxonomy** in `taxonomy.json`, then a 41-subagent classification fan-out) into `enrichment.json` (per-agent `{category, tags, summary}`) → aggregated to `classified.json` (committed). **Key finding: of 2,037 "callable", only 711 are real services — 1,268 are two mass-minted NFT collections (FREAK/Normie), 58 spam.** Taxonomy has a `tier` field (service/collectible/spam) so charts feature services and de-emphasize the templated long tail. Re-run: pipeline order in Repo layout; the two Workflows cost tokens (~1.3M for classify) — only re-run when the agent set materially changes.
 
 ## Local gotchas
 - **npm installs:** the user's `~/.npmrc` has stale auth that 401s. For installs use a clean config:
   `NPM_CONFIG_USERCONFIG=/tmp/ws-empty-npmrc NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ npm install …` (Cloud Build is unaffected.)
 - **`bq` CLI hangs (~60s timeout) when IPv6 is broken** (e.g. behind some VPNs): `bigquery.googleapis.com` resolves to IPv6, and bq's Python httplib2 has no happy-eyeballs fallback. Auth/network are fine — `curl -4` to the BigQuery REST API works instantly. The export script therefore uses **BigQuery REST over `curl -4`**, not `bq`. If you need `bq` itself, restore IPv6 (toggle VPN) or disable IPv6 on the interface.
 - bq/gcloud authed (samuel.walker9@gmail.com); firebase CLI authed; gh authed as cloudonshore.
+- **Restart the dev server after `next build`** — running `npm run build` while `next dev` is live clobbers the shared `.next` and the dev server then 500s. (Recurring "Internal Server Error" on localhost = this, not a code bug.)
+- **Browser tool (Chrome MCP) is blocked from `etherscan.io`** ("safety restrictions"). Give the user the link, or characterize contracts from BigQuery / the committed ABIs instead.
 
 ## Pointers
+- `docs/TODO.md` — **parked work** (card spec-compliance/validator view, full-standard detection, deeper A2A/OASF skills fetch, off-chain refinements, pre-existing fixes). Authoritative card spec = the **8004scan best-practices validator**: https://best-practices.8004scan.io/docs/01-agent-metadata-standard.html
+- `docs/AGENT-DATA-MODEL.md` — **what the agent data IS** (two stores, card schema, the 3 owner identities + factory, marketplace findings, field provenance, card-indexing plan). Read before card/aggregate work.
+- `docs/ARCHITECTURE.md` — **data pipeline & serving design** (factory→storefront, the 4 steps, cost guardrail, rollout phases). Read before touching the pipeline.
 - `docs/AGENT-ECONOMY-STACK.md` — ERC-8004 / x402 / ERC-8257 / ERC-8183 reference + x402 dashboard methodology.
 - `docs/GCP-EXPLORATION.md` — BigQuery data exploration, cost model, validated findings.
 - `sql/erc8004_queries.sql` — the decoder/metric queries.

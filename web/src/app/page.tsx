@@ -1,9 +1,19 @@
-import { GrowthChart, MetadataDonut, OwnerBars, X402Bar } from "@/components/charts";
-import { fmt, metrics, pct } from "@/lib/metrics";
+import { ServiceGrowth, TierBar } from "@/components/insight-charts";
+import {
+  callableTotal,
+  classified,
+  collectibleTotal,
+  serviceCategories,
+  serviceTotal,
+  spamTotal,
+} from "@/lib/classified";
+import { fmt, getMetrics, pct } from "@/lib/metrics";
 
-const m = metrics;
-const emptyPct = (m.summary.empty_metadata / m.summary.agents) * 100;
-const payablePct = (m.summary.x402_payable / m.summary.onchain_cards) * 100;
+// Statically generated, refreshed by ISR every 6h (must be a literal — Next reads
+// this at build time). Visitors hit the edge-cached page; the GCS read happens once
+// per regeneration. Keep in sync with REVALIDATE_SECONDS in lib/metrics.ts. See
+// docs/ARCHITECTURE.md.
+export const revalidate = 21600;
 
 function Card({
   title,
@@ -51,7 +61,10 @@ function Stat({
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const m = await getMetrics();
+  const payablePct = (m.summary.x402_payable / m.summary.onchain_cards) * 100;
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
@@ -61,9 +74,32 @@ export default function Home() {
             <span className="font-semibold tracking-tight">The Wallet Shift</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted">
-            <span>Ethereum mainnet</span>
-            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">Ethereum mainnet</span>
             <span className="tabular hidden sm:inline">as of {m.generated_at}</span>
+            <a
+              href="/agents"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Agents
+            </a>
+            <a
+              href="/services"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Services
+            </a>
+            <a
+              href="/cards"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Cards
+            </a>
+            <a
+              href="/explore"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Explore
+            </a>
             <a
               href="https://blog.thewalletshift.com"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
@@ -86,68 +122,42 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <Stat label="Agents registered" value={fmt(m.summary.agents)} sub="ERC-8004 identities" tone="accent" />
-          <Stat label="Unique operators" value={fmt(m.summary.unique_owners)} sub="wallets behind them" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat label="Agents registered" value={fmt(classified.total_agents)} sub="ERC-8004 identities" />
+          <Stat label="Callable agents" value={fmt(callableTotal)} sub="expose a service endpoint" />
+          <Stat label="Real services" value={fmt(serviceTotal)} sub="after stripping collectibles" tone="accent" />
           <Stat label="x402-payable" value={fmt(m.summary.x402_payable)} sub={`${pct(payablePct)} of on-chain cards`} tone="accent" />
-          <Stat label="Empty shells" value={pct(emptyPct)} sub={`${fmt(m.summary.empty_metadata)} with no metadata`} tone="warn" />
-          <Stat label="Top-wallet share" value={pct(m.summary.top1_owner_pct)} sub="owned by one address" tone="warn" />
         </div>
 
         <div className="mt-3">
-          <Card title="The shift, over time" hint="cumulative agent registrations">
-            <GrowthChart data={m.growth_daily} />
-          </Card>
-        </div>
-
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <Card title="Operator concentration" hint="top 10 wallets by agents">
-            <OwnerBars data={m.top_owners} />
-            <p className="mt-3 text-xs text-muted">
-              The top 10 operators control{" "}
-              <span className="text-foreground">{pct(m.summary.top10_owner_pct)}</span> of all agents
-              — one wallet alone holds {pct(m.summary.top1_owner_pct)}.
-            </p>
-          </Card>
-          <Card title="Metadata quality" hint="how agents describe themselves">
-            <MetadataDonut data={m.uri_types} />
-            <p className="mt-3 text-xs text-muted">
-              Over half of agents register with{" "}
-              <span className="text-foreground">no metadata at all</span> — the real, described agent
-              population is far smaller than the headline count.
+          <Card
+            title="The shift, over time"
+            hint="cumulative registrations — service vs. the long tail"
+          >
+            <ServiceGrowth data={classified.growth} />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              The headline count keeps climbing, but the{" "}
+              <span className="text-accent">{fmt(serviceTotal)} agents that actually provide a service</span> are a
+              thin sliver. Most growth is empty registrations and mass-minted NFT collectibles.
             </p>
           </Card>
         </div>
 
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <Card title="Who can actually be paid" hint="x402 support among on-chain cards">
-            <X402Bar data={m.x402} />
-            <p className="mt-3 text-xs text-muted">
-              <span className="text-foreground">{fmt(m.summary.x402_payable)}</span> agents declare
-              x402 payment support in their on-chain card.
-            </p>
-          </Card>
-          <Card title="Reputation leaderboard" hint="≥3 unique reviewers (Sybil-guarded)">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-medium">Agent</th>
-                  <th className="pb-2 text-right font-medium">Reviewers</th>
-                  <th className="pb-2 text-right font-medium">Feedback</th>
-                  <th className="pb-2 text-right font-medium">Score</th>
-                </tr>
-              </thead>
-              <tbody className="tabular">
-                {m.reputation_top.slice(0, 8).map((r) => (
-                  <tr key={r.agent_id} className="border-t border-border/60">
-                    <td className="py-1.5 font-mono text-foreground">#{r.agent_id}</td>
-                    <td className="py-1.5 text-right text-foreground">{r.unique_clients}</td>
-                    <td className="py-1.5 text-right text-muted">{r.feedback_count}</td>
-                    <td className="py-1.5 text-right text-accent">{r.avg_score.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="mt-3">
+          <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
+            <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+              <span>Top real categories:</span>
+              {serviceCategories.slice(0, 4).map((c) => (
+                <span key={c.key} className="text-foreground">
+                  {c.label.replace(/ \(.*\)$/, "").replace(/^DeFi: /, "")}{" "}
+                  <span className="text-muted">{fmt(c.count)}</span>
+                </span>
+              ))}
+              <a href="/services" className="ml-auto text-accent hover:underline">
+                Explore what they do →
+              </a>
+            </div>
           </Card>
         </div>
 
