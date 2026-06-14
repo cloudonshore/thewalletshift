@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import type { CategoryStat, GrowthPoint } from "@/lib/classified";
+import { categoryPalette } from "@/lib/palette";
 
 const ACCENT = "#f0531f"; // real service (brand orange)
 const VIOLET = "#a78bfa"; // collectibles / templated
@@ -131,12 +132,7 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
 // ---- service categories growth over time (stacked area, togglable) ----------
 // Distinct palette for the ~13 service categories. Click a legend item to drop it
 // from the stack — hiding the dominant DeFi-yield band reveals the smaller ones.
-// Generated from the brand orange by scripts/gen-palette.mjs — hero (index 0) is the
-// true brand color; the rest are a cohesive muted family (constant S/L hue sweep).
-const PALETTE = [
-  "#f0531f", "#7dbed4", "#7d93d4", "#937dd4", "#be7dd4", "#d47dbe", "#d47d93",
-  "#d4937d", "#d4be7d", "#bed47d", "#93d47d", "#7dd493", "#7dd4be",
-];
+// Palette is generated from the single brand color with chroma-js (see lib/palette).
 const shortLabel = (l: string) => l.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim();
 
 export function CategoryGrowth({
@@ -154,7 +150,8 @@ export function CategoryGrowth({
       else if (next.size < categories.length - 1) next.add(key);
       return next;
     });
-  const colorOf = (i: number) => PALETTE[i % PALETTE.length];
+  const palette = categoryPalette(categories.length);
+  const colorOf = (i: number) => palette[i % palette.length];
   const labelByKey = Object.fromEntries(categories.map((c) => [c.key, shortLabel(c.label)]));
 
   return (
