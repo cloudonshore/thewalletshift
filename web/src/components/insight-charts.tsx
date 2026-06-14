@@ -36,13 +36,13 @@ const tooltipStyle = {
 // "no callable service" band reveals the service-vs-collectibles detail.
 const GROWTH_SERIES = [
   { key: "service", label: "Real-service agents", color: ACCENT, fillOpacity: 0.85, strokeWidth: 1.5 },
-  { key: "other_callable", label: "NFT collectibles / spam (callable but templated)", color: VIOLET, fillOpacity: 0.35, strokeWidth: 1 },
-  { key: "non_callable", label: "No callable service", color: GREY, fillOpacity: 0.4, strokeWidth: 1 },
+  { key: "other_callable", label: "NFT collectibles (callable but templated)", color: VIOLET, fillOpacity: 0.35, strokeWidth: 1 },
+  { key: "non_callable", label: "No real service (incl. placeholder / spam)", color: GREY, fillOpacity: 0.4, strokeWidth: 1 },
 ] as const;
 const GROWTH_LABELS: Record<string, string> = {
   service: "Real-service agents",
-  other_callable: "NFT collectibles / spam",
-  non_callable: "No callable service",
+  other_callable: "NFT collectibles",
+  non_callable: "No real service",
 };
 
 export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
@@ -248,13 +248,14 @@ export function CategoryBars({ data }: { data: CategoryStat[] }) {
   );
 }
 
-// ---- segmented composition bar (callable set: service / collectible / spam) --
-export function TierBar({ service, collectible, spam }: { service: number; collectible: number; spam: number }) {
-  const total = service + collectible + spam;
+// ---- segmented composition bar (working interfaces: service / collectible) ---
+// Placeholder/spam is deliberately excluded — it belongs with the non-callable
+// long tail, not as a callable tier (see the "shift over time" chart).
+export function TierBar({ service, collectible }: { service: number; collectible: number }) {
+  const total = service + collectible;
   const segs = [
     { key: "Real services", value: service, color: ACCENT },
     { key: "NFT collectibles", value: collectible, color: VIOLET },
-    { key: "Placeholder / spam", value: spam, color: GREY },
   ];
   return (
     <div>

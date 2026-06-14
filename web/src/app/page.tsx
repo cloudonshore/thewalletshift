@@ -137,19 +137,6 @@ export default async function Home() {
           <Stat label="x402-payable" value={fmt(x402Service)} sub={`${pct1(x402Service, serviceTotal)} of real services`} tone="accent" />
         </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <BrowseButton
-            href="/services"
-            title="View service agents"
-            sub={`${fmt(serviceTotal)} real, callable services · search + filter`}
-          />
-          <BrowseButton
-            href="/collectibles"
-            title="View collectible agents"
-            sub={`${fmt(collectibleTotal)} agents across FREAK, Normie & more`}
-          />
-        </div>
-
         <div className="mt-3">
           <Card
             title="The shift, over time"
@@ -165,16 +152,13 @@ export default async function Home() {
         </div>
 
         <div className="mt-3">
-          <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
-            <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
-            <div className="mt-4 flex justify-end gap-4">
-              <Link href="/services" className="text-xs text-accent hover:underline">
-                Real services →
-              </Link>
-              <Link href="/collectibles" className="text-xs text-accent hover:underline">
-                NFT collectibles →
-              </Link>
-            </div>
+          <Card title="Most “callable” agents aren’t services" hint={`${fmt(serviceTotal + collectibleTotal)} real interfaces, by tier`}>
+            <TierBar service={serviceTotal} collectible={collectibleTotal} />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              Of the agents exposing a working interface, real services are the minority — most are mass-minted NFT
+              collectibles. The {fmt(spamTotal)} placeholder/spam agents are set aside with the non-callable long tail
+              above.
+            </p>
           </Card>
         </div>
 
@@ -197,6 +181,13 @@ export default async function Home() {
               , deploying one ZK rebalancer agent per user wallet. Toggle it off in the legend to
               see how the smaller categories are growing.
             </p>
+            <div className="mt-4">
+              <BrowseButton
+                href="/services"
+                title="View service agents"
+                sub={`Browse all ${fmt(serviceTotal)} real services · search + filter`}
+              />
+            </div>
           </Card>
         </div>
 
@@ -211,11 +202,15 @@ export default async function Home() {
               <span className="text-foreground">sub-collections minted into the one ERC-8004 registry</span>. Two
               operators dominate — <span className="text-foreground">{fmt(normieCount)} Normie</span> personas (still
               held by a single deployer wallet) and <span className="text-foreground">{fmt(freakCount)} FREAK</span>{" "}
-              agents (distributed to {fmt(freakCount)} distinct holders).{" "}
-              <Link href="/collectibles" className="text-accent hover:underline">
-                Browse the collections →
-              </Link>
+              agents (distributed to {fmt(freakCount)} distinct holders).
             </p>
+            <div className="mt-4">
+              <BrowseButton
+                href="/collectibles"
+                title="View collectible agents"
+                sub={`Browse all ${fmt(collectibleTotal)} agents across FREAK, Normie & more`}
+              />
+            </div>
           </Card>
         </div>
 
