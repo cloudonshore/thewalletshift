@@ -115,6 +115,29 @@ https/ipfs links) · other 2,325 (gzip-data / bare-text / malformed junk) · emp
   This is the honest "agents you can actually call/pay," vs 34.5k raw registrations.
 - **Empty** (52%): no card to index.
 
+## Service classification — what each callable agent DOES (powers `/services`)
+The honest "callable" set is **2,037 agents** (expose an a2a/mcp/web service; ens/did
+bindings alone don't count). Pipeline (all scripts in `scripts/`, order in `CLAUDE.md`):
+1. **Capture endpoints + full descriptions:** `export-onchain-callable.sh` (on-chain, SQL,
+   free) + `fetch-cards.mjs` (off-chain, now retains service `endpoint` URLs + untruncated
+   `descr_full`) → `build-enrich-input.mjs` unions them into the callable set.
+2. **Second hop — real capabilities:** `fetch-skills.mjs` fetches each agent's A2A
+   `/.well-known/agent-card.json` `skills[]` and best-effort MCP `initialize`+`tools/list`.
+   **605 reachable** (583 A2A skill-lists, 31 MCP tool-lists — MCP is hard: session/SSE/auth).
+   `build-corpus.mjs` folds skills into one `corpus.json` (`cap` field = "what it does").
+3. **Taxonomy (emergent → approved):** a Workflow clusters a sample → a **16-category**
+   taxonomy (`taxonomy.json`), each with a `tier`: **service / collectible / spam**.
+4. **Classify:** a 41-subagent Workflow assigns every callable agent a `primary_category`,
+   `tags[]`, and a 1-line `summary` → `enrichment.json`. `build-classified.mjs` aggregates
+   to `classified.json` (counts, top tags, examples, cumulative growth series).
+- **Headline finding:** of 2,037 callable, **711 are real services**; **1,268 are two
+  mass-minted NFT collections** (FREAK = read-only NFT toolkit, Normie = persona-chat),
+  **58 spam**. Even the service tier is concentrated — Olas services + one ZK-yield minter
+  dominate `defi-yield-rebalancing` (455). The `tier` field lets the UI feature services
+  and de-emphasize the templated collectibles.
+- ⚠️ The LLM `summary`/`tags`/`category` are **model-generated** (not on-chain) — they're a
+  best-effort read of each card's description + fetched skills, re-runnable but non-deterministic.
+
 ## SQL decoding cheatsheet (against `logs_2026`)
 - **agentURI** (from `Registered`):
   `SAFE_CONVERT_BYTES_TO_STRING(FROM_HEX(SUBSTR(data,131,2*SAFE_CAST(CONCAT('0x',SUBSTR(data,67,64)) AS INT64))))`

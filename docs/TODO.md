@@ -2,6 +2,25 @@
 
 Things intentionally deferred. Newest at top. Link to detail where it exists.
 
+## Service classification & search — the pivot (2026-06-13)
+Project shifted from analytics-only to **analytics + searchable service API**. Focus
+on the agents that actually provide services; ignore the long-tail junk.
+- **BUILT:** classification pipeline (second-hop A2A skills/MCP tools fetch → emergent
+  taxonomy → 41-subagent LLM classification → `classified.json`) + the `/services`
+  analytics page. 2,037 callable → **711 real services** (rest are NFT collectibles/spam).
+  See the "Service classification" bullet in `docs/AGENT-DATA-MODEL.md` / `CLAUDE.md`.
+- **NEXT — search API:** `GET /api/search?q=…` over the classified corpus
+  (`enrichment.json` summary+tags) so you can find an agent to do a task. Start with
+  keyword/tag match; upgrade to embeddings + vector search (RAG) for natural-language.
+- **NEXT — installable agent skill:** a skill other agents install to search all agent
+  services in natural language (hits the search API / RAG DB). The classification
+  `{summary, tags}` is the corpus; embeddings are the missing piece.
+- **Refinements:** MCP tools coverage is low (31 reachable — session/SSE/auth is hard);
+  the `web` proto is a weak signal (often just a website); 369 off-chain cards still
+  persistently 429. `validator.eth`-style ens-only "services" are correctly excluded
+  from callable. Consider a "distinct operators per category" metric — the service tier
+  is itself concentrated (Olas + one ZK-yield minter dominate `defi-yield-rebalancing`).
+
 ## Card spec-compliance / validator view (deferred 2026-06-13)
 Source of truth: **8004scan best-practices / validator spec** —
 https://best-practices.8004scan.io/docs/01-agent-metadata-standard.html
@@ -23,9 +42,9 @@ URI immutability priority). Remaining, in rough priority:
 3. **`registrations[]` as a verification metric.** Card → `registrations` → back to the
    NFT = bidirectional cryptographic self-verification. We currently only count it
    (645). Elevate to a trust/authenticity signal ("self-verifying cards").
-4. **Deeper capability fetch — "what does each agent DO".** Pull `a2aSkills` (A2A,
-   via `/.well-known/agent-card.json`) and OASF `skills`/`domains`. This is the real
-   answer to "how do I know what they do." Needs a second fetch hop in the pipeline.
+4. **Deeper capability fetch — "what does each agent DO".** ✅ **DONE for A2A + MCP**
+   (`fetch-skills.mjs` pulls A2A `/.well-known/agent-card.json` skills + MCP `tools/list`).
+   Still TODO: **OASF** `skills`/`domains` (3rd framework) as a further hop.
 
 ## Off-chain fetch — refinements (deferred 2026-06-13)
 - ~404 hosts still persistently HTTP-429; a slower scheduled run would recover more.
