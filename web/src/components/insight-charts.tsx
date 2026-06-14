@@ -13,11 +13,10 @@ import {
   YAxis,
 } from "recharts";
 import type { CategoryStat, GrowthPoint } from "@/lib/classified";
-import { categoryPalette, TIER } from "@/lib/palette";
 
-const ACCENT = TIER.service; // real service (brand orange)
-const VIOLET = TIER.collectible; // collectibles / templated
-const GREY = TIER.neutral; // non-callable long tail
+const ACCENT = "#34d399"; // real service
+const VIOLET = "#a78bfa"; // collectibles / templated
+const GREY = "#3f4654"; // non-callable long tail
 const GRID = "#1a1e26";
 const AXIS = "#868e9e";
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -132,7 +131,10 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
 // ---- service categories growth over time (stacked area, togglable) ----------
 // Distinct palette for the ~13 service categories. Click a legend item to drop it
 // from the stack — hiding the dominant DeFi-yield band reveals the smaller ones.
-// Palette comes from lib/palette (an "i want hue" set, brand orange pinned first).
+const PALETTE = [
+  "#34d399", "#38bdf8", "#a78bfa", "#f59e0b", "#fb7185", "#22d3ee", "#c084fc",
+  "#4ade80", "#facc15", "#f472b6", "#60a5fa", "#2dd4bf", "#fb923c",
+];
 const shortLabel = (l: string) => l.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim();
 
 export function CategoryGrowth({
@@ -150,8 +152,7 @@ export function CategoryGrowth({
       else if (next.size < categories.length - 1) next.add(key);
       return next;
     });
-  const palette = categoryPalette(categories.length);
-  const colorOf = (i: number) => palette[i % palette.length];
+  const colorOf = (i: number) => PALETTE[i % PALETTE.length];
   const labelByKey = Object.fromEntries(categories.map((c) => [c.key, shortLabel(c.label)]));
 
   return (
@@ -184,9 +185,9 @@ export function CategoryGrowth({
                 dataKey={c.key}
                 stackId="1"
                 stroke={colorOf(i)}
-                strokeWidth={0.5}
+                strokeWidth={1}
                 fill={colorOf(i)}
-                fillOpacity={0.9}
+                fillOpacity={0.55}
                 isAnimationActive={false}
               />
             )

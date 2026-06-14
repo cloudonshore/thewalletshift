@@ -99,7 +99,7 @@ export default function CardsPage() {
           <Card title="Coverage" hint="of all 34,556 agents">
             <SegmentBar
               segments={[
-                { label: "On-chain card (indexed)", value: cov.onchain_cards, color: "#79c15f" },
+                { label: "On-chain card (indexed)", value: cov.onchain_cards, color: "#34d399" },
                 { label: "Off-chain link (not yet indexed)", value: cov.offchain_cards, color: "#38bdf8" },
                 { label: "Malformed / non-standard", value: cov.other_cards, color: "#f59e0b" },
                 { label: "No card", value: cov.empty, color: "#3f4654" },
@@ -142,7 +142,7 @@ export default function CardsPage() {
           <Card title="Who can actually be paid" hint="x402 support declared in the card">
             <SegmentBar
               segments={[
-                { label: "Payable (x402)", value: c.x402.payable, color: "#79c15f" },
+                { label: "Payable (x402)", value: c.x402.payable, color: "#34d399" },
                 { label: "Explicitly not payable", value: c.x402.not_payable, color: "#3f4654" },
                 { label: "Doesn't declare", value: c.x402.undeclared, color: "#1f2733" },
               ]}
@@ -155,7 +155,7 @@ export default function CardsPage() {
           <Card title="Live or dormant" hint="the card's self-declared active flag">
             <SegmentBar
               segments={[
-                { label: "Active", value: c.active.active, color: "#79c15f" },
+                { label: "Active", value: c.active.active, color: "#34d399" },
                 { label: "Inactive", value: c.active.inactive, color: "#f59e0b" },
                 { label: "Unspecified", value: c.active.undeclared, color: "#1f2733" },
               ]}
@@ -195,7 +195,7 @@ export default function CardsPage() {
                         ? "no type"
                         : (s.bucket ?? "—"),
                 value: s.n,
-                color: s.bucket === "v1" ? "#79c15f" : s.bucket === "unversioned" ? "#f59e0b" : "#fb7185",
+                color: s.bucket === "v1" ? "#34d399" : s.bucket === "unversioned" ? "#f59e0b" : "#fb7185",
               }))}
             />
             <p className="mt-3 text-xs text-muted">
@@ -238,7 +238,7 @@ export default function CardsPage() {
               <Card title="Off-chain link health" hint={`${fmt(c.reachability.fetched)} links fetched`}>
                 <SegmentBar
                   segments={[
-                    { label: "Live card returned", value: c.reachability.buckets.ok ?? 0, color: "#79c15f" },
+                    { label: "Live card returned", value: c.reachability.buckets.ok ?? 0, color: "#34d399" },
                     { label: "404 / not found", value: c.reachability.buckets.not_found ?? 0, color: "#fb7185" },
                     { label: "Homepage / not a card", value: c.reachability.buckets.not_a_card ?? 0, color: "#f59e0b" },
                     { label: "Dead DNS", value: c.reachability.buckets.dns_dead ?? 0, color: "#3f4654" },

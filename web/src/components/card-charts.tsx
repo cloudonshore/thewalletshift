@@ -44,7 +44,7 @@ type Row = { label: string; value: number; color?: string };
 
 // Ranked horizontal bars, sized against the largest value. For trust models,
 // schema buckets, image hosting — anything where the relative magnitudes matter.
-export function RankBars({ rows, accent = "#79c15f" }: { rows: Row[]; accent?: string }) {
+export function RankBars({ rows, accent = "#34d399" }: { rows: Row[]; accent?: string }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <ul className="space-y-2.5">
