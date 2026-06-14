@@ -3,7 +3,7 @@
 // an A2A agent card) all call — one search core, many fronts. It mirrors the
 // in-browser filter logic in components/services-directory.tsx exactly (same
 // haystack, same proto/category/x402 filters) so API and UI results agree.
-import { services, type Provider, type EndpointHealth, type HealthStatus } from "@/lib/services";
+import { services, providerHealth, type Provider, type EndpointHealth, type HealthStatus } from "@/lib/services";
 import { haystack } from "@/lib/haystack";
 
 export interface SearchParams {
@@ -85,7 +85,7 @@ export function searchProviders(params: SearchParams): SearchResult {
     if (category && p.category !== category) return false;
     if (proto && !p.protos.includes(proto)) return false;
     if (x402 && !p.x402) return false;
-    if (status && !p.endpoints.some((e) => e.health?.status === status)) return false;
+    if (status && providerHealth(p) !== status) return false;
     return tokens.every((t) => hay.includes(t));
   }).map(({ p }) => p);
 

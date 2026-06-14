@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Provider, ServiceCategory, EndpointHealth } from "@/lib/services";
-import { fmt } from "@/lib/services";
+import { fmt, providerHealth } from "@/lib/services";
 import { haystack } from "@/lib/haystack";
 
 const PROTO_STYLE: Record<string, string> = {
@@ -15,7 +15,10 @@ const PROTO_STYLE: Record<string, string> = {
   paywalled: "bg-amber-500/15 text-amber-300 border-amber-500/30",
   dead: "bg-red-500/15 text-red-300 border-red-500/30",
 };
-const FILTERS = ["a2a", "mcp", "web", "x402", "live", "dead"] as const;
+// two visually distinct filter groups: protocol/payment vs. the health verdict
+const PROTO_FILTERS = ["a2a", "mcp", "web", "x402"] as const;
+const HEALTH_FILTERS = ["live", "dead"] as const;
+const HEALTH_DOT: Record<string, string> = { live: "bg-emerald-400", dead: "bg-red-400" };
 const FILTER_LABEL: Record<string, string> = {
   a2a: "A2A",
   mcp: "MCP",
@@ -33,6 +36,24 @@ function ProtoChip({ p }: { p: string }) {
     <span className={`rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase ${style}`}>
       {FILTER_LABEL[p] ?? p}
     </span>
+  );
+}
+
+// a filter toggle chip. Protocol filters read as bordered uppercase tags; health
+// filters (live/dead) get a leading status dot + lowercase so they read as a
+// separate, different kind of filter — not "just another protocol".
+function FilterChip({ f, on, onClick, dot }: { f: string; on: boolean; onClick: () => void; dot?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+        dot ? "lowercase" : "uppercase"
+      } ${on ? PROTO_STYLE[f] : "border-border text-muted hover:border-accent/40"}`}
+    >
+      {dot && <span className={`h-1.5 w-1.5 rounded-full ${on ? HEALTH_DOT[f] : "bg-muted/50"}`} />}
+      {FILTER_LABEL[f]}
+    </button>
   );
 }
 
@@ -259,7 +280,12 @@ export function ServicesDirectory({
     setProtos((prev) => {
       const next = new Set(prev);
       if (next.has(f)) next.delete(f);
-      else next.add(f);
+      else {
+        // live/dead are a single provider-level verdict — mutually exclusive
+        if (f === "live") next.delete("dead");
+        if (f === "dead") next.delete("live");
+        next.add(f);
+      }
       return next;
     });
 
@@ -272,7 +298,7 @@ export function ServicesDirectory({
           if (f === "x402") {
             if (!p.x402) return false;
           } else if (f === "live" || f === "dead") {
-            if (!p.endpoints.some((e) => e.health?.status === f)) return false;
+            if (providerHealth(p) !== f) return false;
           } else if (!p.protos.includes(f)) {
             return false;
           }
@@ -333,21 +359,13 @@ export function ServicesDirectory({
             />
           </div>
           <div className="flex items-center gap-1.5">
-            {FILTERS.map((f) => {
-              const on = protos.has(f);
-              return (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => toggleProto(f)}
-                  className={`rounded-md border px-2.5 py-1.5 text-xs font-medium uppercase transition-colors ${
-                    on ? PROTO_STYLE[f] : "border-border text-muted hover:border-accent/40"
-                  }`}
-                >
-                  {FILTER_LABEL[f]}
-                </button>
-              );
-            })}
+            {PROTO_FILTERS.map((f) => (
+              <FilterChip key={f} f={f} on={protos.has(f)} onClick={() => toggleProto(f)} />
+            ))}
+            <span className="mx-1 h-5 w-px self-center bg-border" aria-hidden="true" />
+            {HEALTH_FILTERS.map((f) => (
+              <FilterChip key={f} f={f} on={protos.has(f)} onClick={() => toggleProto(f)} dot />
+            ))}
           </div>
         </div>
 
