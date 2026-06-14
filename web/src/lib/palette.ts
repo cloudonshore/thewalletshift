@@ -1,19 +1,23 @@
-import chroma from "chroma-js";
-
-// The brand color (the logo's red-orange). Drives --accent and the chart palette.
+// Categorical chart palette generated with "i want hue" (tools.medialab.sciences-po
+// .fr/iwanthue) — a 14-colour, perceptually-distinct set (13 service categories + one
+// spare for a future category). The brand orange is pinned first so the dominant
+// band (DeFi Yield) stays on-brand.
 export const BRAND = "#f0531f";
 
-// Categorical chart palette generated from the single brand color with chroma-js,
-// in perceptually-uniform LCH space. The hero (index 0) is the brand itself; the
-// rest are an even hue sweep at fixed lightness/chroma starting at the brand's
-// complement, so the set reads as one coordinated family (no neon spikes) and the
-// two largest bands get maximum separation.
+const PALETTE = [
+  "#f0531f", "#5d7c3f", "#798fca", "#3c4d49", "#cdce55", "#7347c4", "#522f64",
+  "#c99ead", "#6b382d", "#c8485c", "#72d25d", "#8ccdb8", "#c88d4e", "#ce55b6",
+];
+
+// One color per category, cycling if there are ever more categories than swatches.
 export function categoryPalette(n: number): string[] {
-  const hue = chroma(BRAND).get("lch.h");
-  const out = [BRAND];
-  for (let i = 1; i < n; i++) {
-    const h = (hue + 180 + (i - 1) * (360 / Math.max(1, n - 1))) % 360;
-    out.push(chroma.lch(70, 45, h).hex());
-  }
-  return out;
+  return Array.from({ length: n }, (_, i) => PALETTE[i % PALETTE.length]);
 }
+
+// Semantic tier colors (TierBar + the service-vs-tail growth area), drawn from the
+// same palette so the whole UI reads as one set.
+export const TIER = {
+  service: BRAND, // brand orange
+  collectible: "#7347c4", // templated NFT collectibles
+  neutral: "#3f4654", // placeholder/spam + the non-callable long tail
+};

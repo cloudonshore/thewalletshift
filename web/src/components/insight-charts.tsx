@@ -13,11 +13,11 @@ import {
   YAxis,
 } from "recharts";
 import type { CategoryStat, GrowthPoint } from "@/lib/classified";
-import { categoryPalette } from "@/lib/palette";
+import { categoryPalette, TIER } from "@/lib/palette";
 
-const ACCENT = "#f0531f"; // real service (brand orange)
-const VIOLET = "#a78bfa"; // collectibles / templated
-const GREY = "#3f4654"; // non-callable long tail
+const ACCENT = TIER.service; // real service (brand orange)
+const VIOLET = TIER.collectible; // collectibles / templated
+const GREY = TIER.neutral; // non-callable long tail
 const GRID = "#1a1e26";
 const AXIS = "#868e9e";
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -132,7 +132,7 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
 // ---- service categories growth over time (stacked area, togglable) ----------
 // Distinct palette for the ~13 service categories. Click a legend item to drop it
 // from the stack — hiding the dominant DeFi-yield band reveals the smaller ones.
-// Palette is generated from the single brand color with chroma-js (see lib/palette).
+// Palette comes from lib/palette (an "i want hue" set, brand orange pinned first).
 const shortLabel = (l: string) => l.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim();
 
 export function CategoryGrowth({
