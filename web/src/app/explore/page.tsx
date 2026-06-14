@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { AgentBrowser, EventBars } from "@/components/explorer";
 import { explorer } from "@/lib/explorer";
@@ -17,7 +18,7 @@ export default function Explore() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_12px_2px_rgba(52,211,153,0.6)]" />
+            <Image src="/walletshiftlogo.png" alt="The Wallet Shift" width={24} height={24} priority className="rounded-full" />
             <span className="font-semibold tracking-tight">The Wallet Shift</span>
           </Link>
           <Link href="/" className="text-xs text-muted transition-colors hover:text-foreground">

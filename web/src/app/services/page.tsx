@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { CategoryBars, TagBars, TierBar } from "@/components/insight-charts";
 import {
   callableTotal,
@@ -32,7 +33,7 @@ function Nav() {
     <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
         <a href="/" className="flex items-center gap-2.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_12px_2px_rgba(52,211,153,0.6)]" />
+          <Image src="/walletshiftlogo.png" alt="The Wallet Shift" width={24} height={24} priority className="rounded-full" />
           <span className="font-semibold tracking-tight">The Wallet Shift</span>
         </a>
         <div className="flex items-center gap-2 text-xs text-muted">
