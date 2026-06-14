@@ -163,8 +163,16 @@ export default async function Home() {
             />
             <p className="mt-3 text-xs leading-relaxed text-muted">
               DeFi yield/rebalancing dominates by volume — ~90% (408) is a single platform,{" "}
-              <span className="text-foreground">Zyfai</span>, deploying one ZK rebalancer agent per
-              user wallet. Toggle it off in the legend to see how the smaller categories are growing.
+              <a
+                href="https://www.zyf.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-accent hover:underline"
+              >
+                Zyfai
+              </a>
+              , deploying one ZK rebalancer agent per user wallet. Toggle it off in the legend to
+              see how the smaller categories are growing.
             </p>
           </Card>
         </div>
