@@ -128,6 +128,95 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
   );
 }
 
+// ---- service categories growth over time (stacked area, togglable) ----------
+// Distinct palette for the ~13 service categories. Click a legend item to drop it
+// from the stack — hiding the dominant DeFi-yield band reveals the smaller ones.
+const PALETTE = [
+  "#34d399", "#38bdf8", "#a78bfa", "#f59e0b", "#fb7185", "#22d3ee", "#c084fc",
+  "#4ade80", "#facc15", "#f472b6", "#60a5fa", "#2dd4bf", "#fb923c",
+];
+const shortLabel = (l: string) => l.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim();
+
+export function CategoryGrowth({
+  data,
+  categories,
+}: {
+  data: Record<string, number | string>[];
+  categories: { key: string; label: string }[];
+}) {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const toggle = (key: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else if (next.size < categories.length - 1) next.add(key);
+      return next;
+    });
+  const colorOf = (i: number) => PALETTE[i % PALETTE.length];
+  const labelByKey = Object.fromEntries(categories.map((c) => [c.key, shortLabel(c.label)]));
+
+  return (
+    <div>
+      <ResponsiveContainer width="100%" height={320}>
+        <AreaChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+          <XAxis
+            dataKey="date"
+            stroke={AXIS}
+            fontSize={11}
+            tickLine={false}
+            axisLine={{ stroke: GRID }}
+            minTickGap={48}
+            tickFormatter={(d: string) =>
+              new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            }
+          />
+          <YAxis stroke={AXIS} fontSize={11} tickLine={false} axisLine={false} width={36} />
+          <Tooltip
+            contentStyle={tooltipStyle}
+            labelFormatter={(d) => new Date(d).toLocaleDateString("en-US", { dateStyle: "medium" })}
+            formatter={(v, n) => [fmt(Number(v)), labelByKey[String(n)] ?? String(n)]}
+            itemSorter={(it) => -(Number(it.value) || 0)}
+          />
+          {categories.map((c, i) =>
+            hidden.has(c.key) ? null : (
+              <Area
+                key={c.key}
+                type="monotone"
+                dataKey={c.key}
+                stackId="1"
+                stroke={colorOf(i)}
+                strokeWidth={1}
+                fill={colorOf(i)}
+                fillOpacity={0.55}
+                isAnimationActive={false}
+              />
+            )
+          )}
+        </AreaChart>
+      </ResponsiveContainer>
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+        {categories.map((c, i) => {
+          const off = hidden.has(c.key);
+          return (
+            <li key={c.key}>
+              <button
+                type="button"
+                onClick={() => toggle(c.key)}
+                aria-pressed={!off}
+                title="Click to toggle on the chart"
+                className="flex cursor-pointer items-center gap-1.5 transition-opacity hover:opacity-70"
+              >
+                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: colorOf(i), opacity: off ? 0.25 : 1 }} />
+                <span className={off ? "text-muted line-through" : "text-foreground"}>{labelByKey[c.key]}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 // ---- horizontal category bars (real-service categories) ---------------------
 export function CategoryBars({ data }: { data: CategoryStat[] }) {
   const rows = data.map((c) => ({ ...c, short: c.label.replace(/ \(.*\)$/, "").replace(/^DeFi: /, "") }));

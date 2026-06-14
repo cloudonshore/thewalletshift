@@ -1,11 +1,10 @@
 import Image from "next/image";
-import { ServiceGrowth, TierBar } from "@/components/insight-charts";
+import { CategoryGrowth, ServiceGrowth, TierBar } from "@/components/insight-charts";
 import {
   callableTotal,
   classified,
   collectibleTotal,
   pct1,
-  serviceCategories,
   serviceTotal,
   spamTotal,
   x402Service,
@@ -148,23 +147,24 @@ export default async function Home() {
         <div className="mt-3">
           <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
             <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-muted">Top real categories:</span>
-              {serviceCategories.slice(0, 4).map((c) => (
-                <span
-                  key={c.key}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-foreground"
-                >
-                  {c.label.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim()}
-                  <span className="tabular text-muted">{fmt(c.count)}</span>
-                </span>
-              ))}
-            </div>
-            <div className="mt-3 border-t border-border/60 pt-3 text-right">
+            <div className="mt-4 text-right">
               <a href="/services" className="text-xs text-accent hover:underline">
                 Explore what they do →
               </a>
             </div>
+          </Card>
+        </div>
+
+        <div className="mt-3">
+          <Card title="How the service mix grew" hint="real services by category · cumulative">
+            <CategoryGrowth
+              data={classified.category_growth.series}
+              categories={classified.category_growth.categories}
+            />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              DeFi yield/rebalancing dominates by volume (mostly Olas services and one ZK-yield
+              minter). Toggle it off in the legend to see how the smaller categories are growing.
+            </p>
           </Card>
         </div>
 
