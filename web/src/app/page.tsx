@@ -147,15 +147,20 @@ export default async function Home() {
         <div className="mt-3">
           <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
             <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-              <span>Top real categories:</span>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-muted">Top real categories:</span>
               {serviceCategories.slice(0, 4).map((c) => (
-                <span key={c.key} className="text-foreground">
-                  {c.label.replace(/ \(.*\)$/, "").replace(/^DeFi: /, "")}{" "}
-                  <span className="text-muted">{fmt(c.count)}</span>
+                <span
+                  key={c.key}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-foreground"
+                >
+                  {c.label.replace(/ \(.*\)$/, "").split(/[,&]| and /)[0].trim()}
+                  <span className="tabular text-muted">{fmt(c.count)}</span>
                 </span>
               ))}
-              <a href="/services" className="ml-auto text-accent hover:underline">
+            </div>
+            <div className="mt-3 border-t border-border/60 pt-3 text-right">
+              <a href="/services" className="text-xs text-accent hover:underline">
                 Explore what they do →
               </a>
             </div>
