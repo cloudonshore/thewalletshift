@@ -54,6 +54,10 @@ export interface CollectiblesDoc {
   total: number;
   reachable: number;
   collections: Collection[];
+  collection_growth: {
+    categories: { key: string; label: string }[];
+    series: Record<string, number | string>[];
+  };
 }
 
 export const collectibles = collectiblesJson as CollectiblesDoc;

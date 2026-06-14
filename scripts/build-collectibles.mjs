@@ -224,6 +224,35 @@ if (tail.length) {
   });
 }
 
+// Cumulative registrations per collection over time — feeds the home-page
+// "How the collectibles mix grew" chart (same shape as the service version:
+// {categories:[{key,label}], series:[{date, freak, normie, experimental}]}).
+const GROWTH_CATS = [
+  { key: "freak", label: "FREAK" },
+  { key: "normie", label: "Normie" },
+  { key: "experimental", label: "Experimental & one-off" },
+];
+const incr = new Map(); // date -> {freak, normie, experimental}
+for (const [bkey, recs] of buckets) {
+  const k = bkey === null ? "experimental" : bkey;
+  for (const r of recs) {
+    if (!r.reg) continue;
+    const d = r.reg.slice(0, 10);
+    if (!incr.has(d)) incr.set(d, { freak: 0, normie: 0, experimental: 0 });
+    incr.get(d)[k]++;
+  }
+}
+const cum = { freak: 0, normie: 0, experimental: 0 };
+const growthSeries = [...incr.keys()]
+  .sort()
+  .map((d) => {
+    const i = incr.get(d);
+    cum.freak += i.freak;
+    cum.normie += i.normie;
+    cum.experimental += i.experimental;
+    return { date: d, freak: cum.freak, normie: cum.normie, experimental: cum.experimental };
+  });
+
 const total = collections.reduce((n, c) => n + c.indexed, 0);
 const out = {
   generated_at: enrich.generated_at,
@@ -234,6 +263,7 @@ const out = {
   total,
   reachable: collections.reduce((n, c) => n + c.reachable, 0),
   collections,
+  collection_growth: { categories: GROWTH_CATS, series: growthSeries },
 };
 writeFileSync(`${D}/collectibles.json`, JSON.stringify(out));
 console.log(

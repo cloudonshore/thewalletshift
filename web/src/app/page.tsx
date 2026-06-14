@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { CategoryGrowth, ServiceGrowth, TierBar } from "@/components/insight-charts";
 import {
   callableTotal,
@@ -9,6 +10,7 @@ import {
   spamTotal,
   x402Service,
 } from "@/lib/classified";
+import { collectibles } from "@/lib/collectibles";
 import { fmt, getMetrics } from "@/lib/metrics";
 
 // Statically generated, refreshed by ISR every 6h (must be a literal — Next reads
@@ -63,8 +65,25 @@ function Stat({
   );
 }
 
+function BrowseButton({ href, title, sub }: { href: string; title: string; sub: string }) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-accent/60 hover:bg-accent/[0.04]"
+    >
+      <div className="min-w-0">
+        <div className="text-base font-semibold text-foreground">{title}</div>
+        <div className="mt-0.5 text-xs text-muted">{sub}</div>
+      </div>
+      <span className="shrink-0 text-lg text-accent transition-transform group-hover:translate-x-0.5">→</span>
+    </Link>
+  );
+}
+
 export default async function Home() {
   const m = await getMetrics();
+  const freakCount = collectibles.collections.find((c) => c.key === "freak")?.indexed ?? 0;
+  const normieCount = collectibles.collections.find((c) => c.key === "normie")?.indexed ?? 0;
 
   return (
     <div className="min-h-screen">
@@ -77,24 +96,24 @@ export default async function Home() {
           <div className="flex items-center gap-4 text-xs text-muted">
             <span className="hidden sm:inline">Ethereum mainnet</span>
             <span className="tabular hidden sm:inline">as of {m.generated_at}</span>
-            <a
+            <Link
               href="/"
               className="rounded-md border border-accent/50 px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
               Home
-            </a>
-            <a
+            </Link>
+            <Link
               href="/services"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
               Services
-            </a>
-            <a
+            </Link>
+            <Link
               href="/collectibles"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
               Collectibles
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -118,6 +137,19 @@ export default async function Home() {
           <Stat label="x402-payable" value={fmt(x402Service)} sub={`${pct1(x402Service, serviceTotal)} of real services`} tone="accent" />
         </div>
 
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <BrowseButton
+            href="/services"
+            title="View service agents"
+            sub={`${fmt(serviceTotal)} real, callable services · search + filter`}
+          />
+          <BrowseButton
+            href="/collectibles"
+            title="View collectible agents"
+            sub={`${fmt(collectibleTotal)} agents across FREAK, Normie & more`}
+          />
+        </div>
+
         <div className="mt-3">
           <Card
             title="The shift, over time"
@@ -135,10 +167,13 @@ export default async function Home() {
         <div className="mt-3">
           <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
             <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
-            <div className="mt-4 text-right">
-              <a href="/services" className="text-xs text-accent hover:underline">
-                Explore what they do →
-              </a>
+            <div className="mt-4 flex justify-end gap-4">
+              <Link href="/services" className="text-xs text-accent hover:underline">
+                Real services →
+              </Link>
+              <Link href="/collectibles" className="text-xs text-accent hover:underline">
+                NFT collectibles →
+              </Link>
             </div>
           </Card>
         </div>
@@ -161,6 +196,25 @@ export default async function Home() {
               </a>
               , deploying one ZK rebalancer agent per user wallet. Toggle it off in the legend to
               see how the smaller categories are growing.
+            </p>
+          </Card>
+        </div>
+
+        <div className="mt-3">
+          <Card title="How the collectibles mix grew" hint="NFT-collection agents by collection · cumulative">
+            <CategoryGrowth
+              data={collectibles.collection_growth.series}
+              categories={collectibles.collection_growth.categories}
+            />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              A different shape from services: these aren&apos;t separate contracts but{" "}
+              <span className="text-foreground">sub-collections minted into the one ERC-8004 registry</span>. Two
+              operators dominate — <span className="text-foreground">{fmt(normieCount)} Normie</span> personas (still
+              held by a single deployer wallet) and <span className="text-foreground">{fmt(freakCount)} FREAK</span>{" "}
+              agents (distributed to {fmt(freakCount)} distinct holders).{" "}
+              <Link href="/collectibles" className="text-accent hover:underline">
+                Browse the collections →
+              </Link>
             </p>
           </Card>
         </div>
