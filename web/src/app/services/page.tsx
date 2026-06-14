@@ -60,6 +60,17 @@ export default function Services() {
             the live A2A skills / MCP tools you can actually call. Mass-minted NFT collectibles and placeholder spam are
             filtered out; this is the signal.
           </p>
+          <p className="mt-3 text-xs text-muted">
+            Building an agent? This directory is callable —{" "}
+            <a href="/SKILL.md" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+              /SKILL.md
+            </a>{" "}
+            documents the{" "}
+            <a href="/api/services/search" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+              search API
+            </a>
+            .
+          </p>
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
             <Stat value={fmt(services.total)} label="service providers" />
             <Stat value={fmt(services.with_skills)} label="with live skills read" />
