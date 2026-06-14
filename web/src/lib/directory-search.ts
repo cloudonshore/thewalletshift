@@ -105,9 +105,3 @@ export function searchProviders(params: SearchParams): SearchResult {
 export function getProvider(id: number): Provider | null {
   return services.providers.find((p) => p.id === id) ?? null;
 }
-
-export const categoryFacets = services.categories.map((c) => ({
-  key: c.key,
-  label: c.label,
-  count: c.count,
-}));

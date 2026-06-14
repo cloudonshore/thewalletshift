@@ -52,7 +52,8 @@ An agent's information lives in **two completely separate places**:
 
 1. **Registration owner** — `Registered.owner` (msg.sender at mint). What the
    dashboard's "operator concentration" stat currently uses.
-2. **Current NFT owner** — latest `Transfer.to` for the token. What `/agents` uses.
+2. **Current NFT owner** — latest `Transfer.to` for the token. The correct basis for
+   concentration (the removed `/agents` table used this).
 3. **agentWallet** — the on-chain operating wallet (Store B).
 
 At mint all three are equal. They diverge: **37% of agents have current owner ≠
@@ -78,7 +79,9 @@ owner.** (Dashboard `metrics.json` still uses registration owner — known fix.)
 - **TODO to size the real market:** pull Seaport sale prices (payment legs in those
   361 txns) — answers "dust vs real money" and at what valuations.
 
-## Field provenance in `/agents` (raw vs decoded vs derived)
+## Field provenance — raw vs decoded vs derived
+*(Historical reference: this is what the removed `/agents` table displayed; the same
+provenance still applies to the agent fields feeding the classification pipeline.)*
 - **Raw from events:** `id`, `registered` (`Registered`); `owner` = current
   (latest `Transfer`).
 - **Raw card field:** `uri` (the `agentURI` from `Registered`).
@@ -92,16 +95,14 @@ Coverage of all 34,556 agents: **onchain 9,520 · offchain 4,662 (fetchable
 https/ipfs links) · other 2,325 (gzip-data / bare-text / malformed junk) · empty
 18,049**. Two indexing paths, both implemented:
 - **On-chain cards** (`data:base64`, 9,520): full card is in the log →
-  **decoded in SQL on `logs_2026` for FREE**. `scripts/export-cards.sh` →
-  `web/src/data/cards.json` (bundled aggregates); per-agent fields also baked into
+  **decoded in SQL on `logs_2026` for FREE** — per-agent fields are baked into
   `agents.json` by `export-agents.sh`.
 - **Off-chain cards** (`https`/`ipfs`, 4,662): URI is just a **link** — content is
   NOT on-chain, and **BigQuery cannot fetch it (no network egress).** Pipeline:
   `export-offchain-uris.sh` (BQ extracts the URL worklist) → `fetch-cards.mjs`
   (Node HTTP GETs each, parses, host-interleaved + SSRF-safe + `--retry-failed`
-  for rate-limited hosts) → `merge-cards.mjs` (folds fields into `agents.json`,
-  adds combined interactability + reachability to `cards.json`). Runs **locally
-  today**; promote to a Cloud Run Job for scheduled refresh (Cloud Run *can*
+  for rate-limited hosts) → `merge-cards.mjs` (folds the fetched fields into
+  `agents.json`). Runs **locally today**; promote to a Cloud Run Job for scheduled refresh (Cloud Run *can*
   egress; BQ can't).
 - **Reachability (2026-06-13 run):** of 4,662 links, **~2,012 returned a live card
   (43%)** after retry; the rest are dead (404/DNS), behind bot-protection (Vercel),

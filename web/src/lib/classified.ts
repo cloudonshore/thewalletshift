@@ -71,11 +71,6 @@ export interface Taxonomy {
 export const classified = classifiedJson as Classified;
 export const taxonomy = taxonomyJson as Taxonomy;
 
-export const defById = new Map(taxonomy.categories.map((c) => [c.key, c]));
-export const serviceCategories = classified.categories
-  .filter((c) => c.tier === "service")
-  .sort((a, b) => b.count - a.count);
-
 // counts
 export const callableTotal = classified.classified;
 export const serviceTotal = classified.tiers.service;
