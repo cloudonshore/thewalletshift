@@ -128,6 +128,30 @@ const growth = dates.map((d) => {
   return { date: d, total: tT, callable: tC, service: tS };
 });
 
+// --- per-category cumulative growth (service tier only) — how the mix evolved ---
+const svcCatKeys = tax.categories
+  .filter((c) => c.tier === "service")
+  .map((c) => ({ key: c.key, label: c.label, count: (cat.get(c.key) || { count: 0 }).count }))
+  .sort((a, b) => b.count - a.count)
+  .map(({ key, label }) => ({ key, label }));
+const catOfId = new Map(enrich.agents.map((c) => [c.id, catMeta.has(c.category) ? c.category : "placeholder-spam"]));
+const dateCat = new Map(); // date -> {catKey: count}
+for (const a of agentsDoc.agents) {
+  if (!serviceIds.has(a.id) || !a.reg) continue;
+  const k = catOfId.get(a.id);
+  const e = dateCat.get(a.reg) || {};
+  e[k] = (e[k] || 0) + 1;
+  dateCat.set(a.reg, e);
+}
+const run = {};
+const catSeries = [...dateCat.keys()].sort().map((d) => {
+  const e = dateCat.get(d);
+  for (const k in e) run[k] = (run[k] || 0) + e[k];
+  const row = { date: d };
+  for (const c of svcCatKeys) row[c.key] = run[c.key] || 0;
+  return row;
+});
+
 const out = {
   generated_at: enrich.generated_at,
   network: "ethereum-mainnet",
@@ -137,6 +161,7 @@ const out = {
   x402,
   categories: categories.sort((a, b) => b.count - a.count),
   top_tags,
+  category_growth: { categories: svcCatKeys, series: catSeries },
   growth,
 };
 writeFileSync(`${D}/classified.json`, JSON.stringify(out));

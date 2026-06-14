@@ -37,6 +37,10 @@ export interface GrowthPoint {
   callable: number; // expose a callable service
   service: number; // real-service tier (excludes collectibles + spam)
 }
+export interface CategoryGrowth {
+  categories: { key: string; label: string }[];
+  series: Record<string, number | string>[]; // each row: { date, [categoryKey]: cumulativeCount }
+}
 export interface Classified {
   generated_at: string;
   network: string;
@@ -47,6 +51,7 @@ export interface Classified {
   categories: CategoryStat[];
   top_tags: { tag: string; count: number }[];
   growth: GrowthPoint[];
+  category_growth: CategoryGrowth;
 }
 export interface TaxonomyCategory {
   key: string;

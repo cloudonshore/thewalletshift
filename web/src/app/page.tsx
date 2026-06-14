@@ -1,14 +1,16 @@
-import { ServiceGrowth, TierBar } from "@/components/insight-charts";
+import Image from "next/image";
+import Link from "next/link";
+import { CategoryGrowth, ServiceGrowth, TierBar } from "@/components/insight-charts";
 import {
   callableTotal,
   classified,
   collectibleTotal,
   pct1,
-  serviceCategories,
   serviceTotal,
   spamTotal,
   x402Service,
 } from "@/lib/classified";
+import { collectibles } from "@/lib/collectibles";
 import { fmt, getMetrics } from "@/lib/metrics";
 
 // Statically generated, refreshed by ISR every 6h (must be a literal — Next reads
@@ -63,50 +65,55 @@ function Stat({
   );
 }
 
+function BrowseButton({ href, title, sub }: { href: string; title: string; sub: string }) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-accent/60 hover:bg-accent/[0.04]"
+    >
+      <div className="min-w-0">
+        <div className="text-base font-semibold text-foreground">{title}</div>
+        <div className="mt-0.5 text-xs text-muted">{sub}</div>
+      </div>
+      <span className="shrink-0 text-lg text-accent transition-transform group-hover:translate-x-0.5">→</span>
+    </Link>
+  );
+}
+
 export default async function Home() {
   const m = await getMetrics();
+  const freakCount = collectibles.collections.find((c) => c.key === "freak")?.indexed ?? 0;
+  const normieCount = collectibles.collections.find((c) => c.key === "normie")?.indexed ?? 0;
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_12px_2px_rgba(52,211,153,0.6)]" />
+            <Image src="/walletshiftlogo.png" alt="The Wallet Shift" width={24} height={24} priority className="rounded-full" />
             <span className="font-semibold tracking-tight">The Wallet Shift</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted">
             <span className="hidden sm:inline">Ethereum mainnet</span>
             <span className="tabular hidden sm:inline">as of {m.generated_at}</span>
-            <a
-              href="/agents"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            <Link
+              href="/"
+              className="rounded-md border border-accent/50 px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
-              Agents
-            </a>
-            <a
+              Home
+            </Link>
+            <Link
               href="/services"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
               Services
-            </a>
-            <a
-              href="/cards"
+            </Link>
+            <Link
+              href="/collectibles"
               className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
             >
-              Cards
-            </a>
-            <a
-              href="/explore"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
-            >
-              Explore
-            </a>
-            <a
-              href="https://blog.thewalletshift.com"
-              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
-            >
-              Blog
-            </a>
+              Collectibles
+            </Link>
           </div>
         </div>
       </header>
@@ -145,19 +152,64 @@ export default async function Home() {
         </div>
 
         <div className="mt-3">
-          <Card title="Most “callable” agents aren’t services" hint={`${fmt(callableTotal)} callable, by tier`}>
-            <TierBar service={serviceTotal} collectible={collectibleTotal} spam={spamTotal} />
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-              <span>Top real categories:</span>
-              {serviceCategories.slice(0, 4).map((c) => (
-                <span key={c.key} className="text-foreground">
-                  {c.label.replace(/ \(.*\)$/, "").replace(/^DeFi: /, "")}{" "}
-                  <span className="text-muted">{fmt(c.count)}</span>
-                </span>
-              ))}
-              <a href="/services" className="ml-auto text-accent hover:underline">
-                Explore what they do →
+          <Card title="Most “callable” agents aren’t services" hint={`${fmt(serviceTotal + collectibleTotal)} real interfaces, by tier`}>
+            <TierBar service={serviceTotal} collectible={collectibleTotal} />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              Of the agents exposing a working interface, real services are the minority — most are mass-minted NFT
+              collectibles. The {fmt(spamTotal)} placeholder/spam agents are set aside with the non-callable long tail
+              above.
+            </p>
+          </Card>
+        </div>
+
+        <div className="mt-3">
+          <Card title="How the service mix grew" hint="real services by category · cumulative">
+            <CategoryGrowth
+              data={classified.category_growth.series}
+              categories={classified.category_growth.categories}
+            />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              DeFi yield/rebalancing dominates by volume — ~90% (408) is a single platform,{" "}
+              <a
+                href="https://www.zyf.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-accent hover:underline"
+              >
+                Zyfai
               </a>
+              , deploying one ZK rebalancer agent per user wallet. Toggle it off in the legend to
+              see how the smaller categories are growing.
+            </p>
+            <div className="mt-4">
+              <BrowseButton
+                href="/services"
+                title="View service agents"
+                sub={`Browse all ${fmt(serviceTotal)} real services · search + filter`}
+              />
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-3">
+          <Card title="How the collectibles mix grew" hint="NFT-collection agents by collection · cumulative">
+            <CategoryGrowth
+              data={collectibles.collection_growth.series}
+              categories={collectibles.collection_growth.categories}
+            />
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              A different shape from services: these aren&apos;t separate contracts but{" "}
+              <span className="text-foreground">sub-collections minted into the one ERC-8004 registry</span>. Two
+              operators dominate — <span className="text-foreground">{fmt(normieCount)} Normie</span> personas (still
+              held by a single deployer wallet) and <span className="text-foreground">{fmt(freakCount)} FREAK</span>{" "}
+              agents (distributed to {fmt(freakCount)} distinct holders).
+            </p>
+            <div className="mt-4">
+              <BrowseButton
+                href="/collectibles"
+                title="View collectible agents"
+                sub={`Browse all ${fmt(collectibleTotal)} agents across FREAK, Normie & more`}
+              />
             </div>
           </Card>
         </div>
@@ -170,7 +222,17 @@ export default async function Home() {
             <span className="font-mono">0x8004baa1…</span>) via Google BigQuery, and is reproducible.
             Reputation requires ≥3 distinct reviewers to count, as a Sybil guard. Source: {m.source}.
           </p>
-          <p className="mt-2">The Wallet Shift · built at ETHGlobal New York 2026.</p>
+          <p className="mt-2">
+            The Wallet Shift · built at ETHGlobal New York 2026 · built by{" "}
+            <a
+              href="https://x.com/cloudonshoree"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground hover:text-accent hover:underline"
+            >
+              Sam Walker
+            </a>
+          </p>
         </footer>
       </main>
     </div>

@@ -2,6 +2,23 @@
 
 Things intentionally deferred. Newest at top. Link to detail where it exists.
 
+## NFT collectible agents — deep dive (planned 2026-06-13)
+We classified **1,268 callable agents as NFT collectibles** (62% of the callable set) and
+de-emphasized them on `/services`. Now do a dedicated breakdown — they're the dominant
+population and worth their own analysis/page. Known starting points:
+- Two collections: **FREAK** (`nft-collectible-market-reader`, 251 — templated read-only
+  NFT/market toolkit + ERC-6551 token-bound-account inventory) and **Normie**
+  (`nft-collectible-persona-chat`, 1,017 — in-character roleplay chat, often null skills).
+- Hosts seen in the off-chain fetch: `normies.art` (~1,171 cards), `freaks.one` (~267).
+- Angles to break down: collection identity (contract/host), mint timeline & rate, current
+  owner distribution (one minter vs. distributed? cf. the mint-factory `0xd5d6d96f…`),
+  FREAK's actual toolkit (what NFT/market reads it exposes via A2A), Normie's persona/lore
+  structure, ERC-6551 TBA usage, any real on-chain activity vs. pure collectible, and how
+  much of the "agent economy" headline they inflate.
+- Likely deliverable: a `/collectibles` page or a section, parallel to `/services`.
+- Data already on hand: `enrichment.json` (per-agent category+summary+tags),
+  `corpus.json` (descriptions + fetched skills), `agents.json` (owners, reg dates, hosts).
+
 ## Service classification & search — the pivot (2026-06-13)
 Project shifted from analytics-only to **analytics + searchable service API**. Focus
 on the agents that actually provide services; ignore the long-tail junk.
@@ -19,7 +36,8 @@ on the agents that actually provide services; ignore the long-tail junk.
   the `web` proto is a weak signal (often just a website); 369 off-chain cards still
   persistently 429. `validator.eth`-style ens-only "services" are correctly excluded
   from callable. Consider a "distinct operators per category" metric — the service tier
-  is itself concentrated (Olas + one ZK-yield minter dominate `defi-yield-rebalancing`).
+  is itself concentrated (Zyfai's per-user ZK rebalancer is ~90% of `defi-yield-rebalancing`
+  — 408 of 455; Olas is only 13).
 
 ## Card spec-compliance / validator view (deferred 2026-06-13)
 Source of truth: **8004scan best-practices / validator spec** —
