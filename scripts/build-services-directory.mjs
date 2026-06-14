@@ -45,6 +45,16 @@ const hostOf = (url) => {
     return (url || "").replace(/^https?:\/\//, "").split("/")[0] || null;
   }
 };
+// health only applies to HTTP(S) endpoints — ENS names / CAIP-10 on-chain refs
+// are identifiers, not callable endpoints, so they carry no health verdict.
+const isHttp = (url) => {
+  try {
+    const p = new URL(url).protocol;
+    return p === "http:" || p === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // dedupe endpoints by proto+url, keep a short host for display
 function endpointsOf(inp) {
@@ -56,7 +66,7 @@ function endpointsOf(inp) {
     if (!url || seen.has(key)) continue;
     seen.add(key);
     const ep = { proto: s.proto, name: s.name || s.proto, url, host: hostOf(url) };
-    const h = healthBy.get(`${inp.id}|${url}`);
+    const h = isHttp(url) ? healthBy.get(`${inp.id}|${url}`) : null;
     if (h) ep.health = h;
     out.push(ep);
   }

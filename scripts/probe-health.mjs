@@ -56,6 +56,17 @@ const fetchable = (u) => {
   const h = hostOf(u);
   return h && !PRIVATE.test(h);
 };
+// only HTTP(S) URLs are probeable endpoints. ENS names (keeperhub.eth) and CAIP-10
+// on-chain refs (eip155:1:0x…) are identifiers, not callable endpoints — never
+// "dead", just not HTTP. Skip them entirely so they carry no health verdict.
+function isHttp(u) {
+  try {
+    const p = new URL(u).protocol;
+    return p === "http:" || p === "https:";
+  } catch {
+    return false;
+  }
+}
 
 // ---- body reader: tolerate both plain JSON and SSE (text/event-stream) -------
 async function readBody(res) {
@@ -298,8 +309,9 @@ async function run() {
   let jobs = [];
   for (const p of providers) {
     for (const ep of p.endpoints || []) {
-      if (!ep.url) continue;
-      jobs.push({ id: p.id, url: ep.url.trim(), provider: p, ep });
+      const url = (ep.url || "").trim();
+      if (!url || !isHttp(url)) continue; // skip ENS / CAIP / non-HTTP refs — not probeable
+      jobs.push({ id: p.id, url, provider: p, ep });
     }
   }
   jobs = interleaveByHost(jobs);
