@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Area,
   AreaChart,
@@ -30,8 +31,30 @@ const tooltipStyle = {
 
 // ---- the one home-page chart: total registrations split into service / other --
 // Stacked area summing to total: real-service (bottom, bright), other-callable
-// (collectibles+spam), and the non-callable long tail (top, grey).
+// (collectibles+spam), and the non-callable long tail (top, grey). Click a legend
+// item to drop that series from the stack — the chart rescales, so hiding the big
+// "no callable service" band reveals the service-vs-collectibles detail.
+const GROWTH_SERIES = [
+  { key: "service", label: "Real-service agents", color: ACCENT, fillOpacity: 0.85, strokeWidth: 1.5 },
+  { key: "other_callable", label: "NFT collectibles / spam (callable but templated)", color: VIOLET, fillOpacity: 0.35, strokeWidth: 1 },
+  { key: "non_callable", label: "No callable service", color: GREY, fillOpacity: 0.4, strokeWidth: 1 },
+] as const;
+const GROWTH_LABELS: Record<string, string> = {
+  service: "Real-service agents",
+  other_callable: "NFT collectibles / spam",
+  non_callable: "No callable service",
+};
+
 export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const toggle = (key: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else if (next.size < GROWTH_SERIES.length - 1) next.add(key); // keep at least one series
+      return next;
+    });
+
   const series = data.map((d) => ({
     date: d.date,
     service: d.service,
@@ -65,36 +88,43 @@ export function ServiceGrowth({ data }: { data: GrowthPoint[] }) {
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(d) => new Date(d).toLocaleDateString("en-US", { dateStyle: "medium" })}
-            formatter={(v, n) => {
-              const label =
-                n === "service"
-                  ? "Real-service agents"
-                  : n === "other_callable"
-                    ? "NFT collectibles / spam"
-                    : "No callable service";
-              return [fmt(Number(v)), label];
-            }}
+            formatter={(v, n) => [fmt(Number(v)), GROWTH_LABELS[String(n)] ?? String(n)]}
           />
-          <Area type="monotone" dataKey="service" stackId="1" stroke={ACCENT} strokeWidth={1.5} fill={ACCENT} fillOpacity={0.85} />
-          <Area type="monotone" dataKey="other_callable" stackId="1" stroke={VIOLET} strokeWidth={1} fill={VIOLET} fillOpacity={0.35} />
-          <Area type="monotone" dataKey="non_callable" stackId="1" stroke={GREY} strokeWidth={1} fill={GREY} fillOpacity={0.4} />
+          {GROWTH_SERIES.filter((s) => !hidden.has(s.key)).map((s) => (
+            <Area
+              key={s.key}
+              type="monotone"
+              dataKey={s.key}
+              stackId="1"
+              stroke={s.color}
+              strokeWidth={s.strokeWidth}
+              fill={s.color}
+              fillOpacity={s.fillOpacity}
+              isAnimationActive={false}
+            />
+          ))}
         </AreaChart>
       </ResponsiveContainer>
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
-        <Legend color={ACCENT} label="Real-service agents" />
-        <Legend color={VIOLET} label="NFT collectibles / spam (callable but templated)" dim />
-        <Legend color={GREY} label="No callable service" dim />
+        {GROWTH_SERIES.map((s) => {
+          const off = hidden.has(s.key);
+          return (
+            <li key={s.key}>
+              <button
+                type="button"
+                onClick={() => toggle(s.key)}
+                aria-pressed={!off}
+                title="Click to toggle on the chart"
+                className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-70"
+              >
+                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: s.color, opacity: off ? 0.25 : 1 }} />
+                <span className={off ? "text-muted line-through" : "text-foreground"}>{s.label}</span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
-  );
-}
-
-function Legend({ color, label, dim }: { color: string; label: string; dim?: boolean }) {
-  return (
-    <li className="flex items-center gap-2">
-      <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: color, opacity: dim ? 0.6 : 1 }} />
-      <span className={dim ? "text-muted" : "text-foreground"}>{label}</span>
-    </li>
   );
 }
 
