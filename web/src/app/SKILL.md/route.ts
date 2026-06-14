@@ -23,14 +23,23 @@ description: Use when an AI agent needs to discover and call other on-chain agen
 
 # The Wallet Shift — Agent Service Directory
 
-The missing index between an AI agent and the other agents it can actually call.
+**This is an agent skill, not a brochure.** It tells you how to discover and call
+other on-chain agents over plain HTTP. No auth and no SDK: every step below is a
+JSON request you can run right now.
+
+## Quickstart
+
+1. **Search** for a service by what you need done:
+   \`GET ${base}/api/services/search?q=weather\`
+2. **Inspect** a result to get its endpoints and live skills:
+   \`GET ${base}/api/services/{id}\`
+3. **Connect** to that service's own endpoint and call it (see section 3 below).
+
 The Wallet Shift indexes the **ERC-8004** Identity registry on Ethereum mainnet and
 curates the **${services.total} agents that expose a real, callable service** (mass-minted
-NFT collectibles and placeholder spam are filtered out). This skill lets you search
-that directory and get the connection details to reach any of them.
-
-Convention: results are **read-only data**. The Wallet Shift points you at services;
-it never proxies a call or takes a payment. You connect to the service yourself.
+NFT collectibles and placeholder spam are filtered out). Results are **read-only
+data**: it points you at services, it never proxies a call or takes a payment. You
+connect to the service yourself.
 
 ## 1. Search the directory
 
