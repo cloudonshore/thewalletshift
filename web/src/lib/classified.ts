@@ -28,6 +28,7 @@ export interface CategoryStat {
   a2a: number;
   mcp: number;
   web: number;
+  x402: number;
   examples: AgentExample[];
 }
 export interface GrowthPoint {
@@ -42,6 +43,7 @@ export interface Classified {
   total_agents: number;
   classified: number;
   tiers: Record<Tier, number>;
+  x402: { service: number; callable: number };
   categories: CategoryStat[];
   top_tags: { tag: string; count: number }[];
   growth: GrowthPoint[];
@@ -74,6 +76,7 @@ export const callableTotal = classified.classified;
 export const serviceTotal = classified.tiers.service;
 export const collectibleTotal = classified.tiers.collectible;
 export const spamTotal = classified.tiers.spam;
+export const x402Service = classified.x402.service;
 
 export const pct1 = (n: number, d: number) => (d ? `${((n / d) * 100).toFixed(1)}%` : "—");
 export const fmt = (n: number) => n.toLocaleString("en-US");

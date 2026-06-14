@@ -3,11 +3,13 @@ import {
   callableTotal,
   classified,
   collectibleTotal,
+  pct1,
   serviceCategories,
   serviceTotal,
   spamTotal,
+  x402Service,
 } from "@/lib/classified";
-import { fmt, getMetrics, pct } from "@/lib/metrics";
+import { fmt, getMetrics } from "@/lib/metrics";
 
 // Statically generated, refreshed by ISR every 6h (must be a literal — Next reads
 // this at build time). Visitors hit the edge-cached page; the GCS read happens once
@@ -63,7 +65,6 @@ function Stat({
 
 export default async function Home() {
   const m = await getMetrics();
-  const payablePct = (m.summary.x402_payable / m.summary.onchain_cards) * 100;
 
   return (
     <div className="min-h-screen">
@@ -126,7 +127,7 @@ export default async function Home() {
           <Stat label="Agents registered" value={fmt(classified.total_agents)} sub="ERC-8004 identities" />
           <Stat label="Callable agents" value={fmt(callableTotal)} sub="expose a service endpoint" />
           <Stat label="Real services" value={fmt(serviceTotal)} sub="after stripping collectibles" tone="accent" />
-          <Stat label="x402-payable" value={fmt(m.summary.x402_payable)} sub={`${pct(payablePct)} of on-chain cards`} tone="accent" />
+          <Stat label="x402-payable" value={fmt(x402Service)} sub={`${pct1(x402Service, serviceTotal)} of real services`} tone="accent" />
         </div>
 
         <div className="mt-3">

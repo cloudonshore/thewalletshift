@@ -173,6 +173,7 @@ export default function Services() {
                   {c.a2a > 0 && <span>A2A {fmt(c.a2a)}</span>}
                   {c.web > 0 && <span>web {fmt(c.web)}</span>}
                   {c.mcp > 0 && <span>MCP {fmt(c.mcp)}</span>}
+                  {c.x402 > 0 && <span className="text-accent/80">x402 {fmt(c.x402)}</span>}
                   {c.with_skills > 0 && <span className="text-foreground/70">{fmt(c.with_skills)} with live skills</span>}
                 </div>
                 {c.examples.length > 0 && (
