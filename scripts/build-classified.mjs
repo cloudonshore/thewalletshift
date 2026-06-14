@@ -20,6 +20,8 @@ const agentsDoc = JSON.parse(readFileSync(`${D}/agents.json`, "utf8"));
 const catMeta = new Map(tax.categories.map((c) => [c.key, c]));
 const corpById = new Map(corpus.agents.map((a) => [a.id, a]));
 const clsById = new Map(enrich.agents.map((c) => [c.id, c]));
+// x402-payable = the card's self-declared x402Support flag (from agents.json)
+const x402By = new Map(agentsDoc.agents.map((a) => [a.id, String(a.x402).toLowerCase() === "true"]));
 
 // --- per-category aggregates -------------------------------------------------
 const cat = new Map(); // key -> {count, with_skills, a2a, mcp, web}
@@ -32,12 +34,13 @@ for (const c of enrich.agents) {
   }
   const co = corpById.get(c.id) || {};
   const protos = co.protos || [];
-  const e = cat.get(key) || { count: 0, with_skills: 0, a2a: 0, mcp: 0, web: 0 };
+  const e = cat.get(key) || { count: 0, with_skills: 0, a2a: 0, mcp: 0, web: 0, x402: 0 };
   e.count++;
   if (co.cap) e.with_skills++;
   if (protos.includes("a2a")) e.a2a++;
   if (protos.includes("mcp")) e.mcp++;
   if (protos.includes("web")) e.web++;
+  if (x402By.get(c.id)) e.x402++;
   cat.set(key, e);
 }
 
@@ -68,12 +71,17 @@ const categories = tax.categories.map((c) => ({
   key: c.key,
   label: c.label,
   tier: c.tier,
-  ...(cat.get(c.key) || { count: 0, with_skills: 0, a2a: 0, mcp: 0, web: 0 }),
+  ...(cat.get(c.key) || { count: 0, with_skills: 0, a2a: 0, mcp: 0, web: 0, x402: 0 }),
   examples: pickExamples(c.key),
 }));
 
 const tierCount = { service: 0, collectible: 0, spam: 0 };
-for (const c of categories) tierCount[c.tier] += c.count;
+const x402 = { service: 0, callable: 0 };
+for (const c of categories) {
+  tierCount[c.tier] += c.count;
+  x402.callable += c.x402;
+  if (c.tier === "service") x402.service += c.x402;
+}
 
 // --- top capability tags (service tier only — that's the interesting part) ---
 const serviceKeys = new Set(tax.categories.filter((c) => c.tier === "service").map((c) => c.key));
@@ -126,6 +134,7 @@ const out = {
   total_agents: agentsDoc.count,
   classified: enrich.agents.length,
   tiers: tierCount,
+  x402,
   categories: categories.sort((a, b) => b.count - a.count),
   top_tags,
   growth,
