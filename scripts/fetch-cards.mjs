@@ -65,25 +65,34 @@ function cardEns(card) {
   if (card?.binding && String(card.binding.type).toLowerCase() === "ens") return card.binding.name || null;
   return null;
 }
+// Classify a single service entry to its interaction proto (a2a / mcp / web /
+// x402) by name, type, or URL. Returns null if it matches none.
+function entryProto(name, type, url) {
+  const hay = `${name} ${type} ${url}`.toLowerCase();
+  if (hay.includes("a2a") || hay.includes("agent-card") || hay.includes("/.well-known/agent")) return "a2a";
+  if (hay.includes("mcp")) return "mcp";
+  if (hay.includes("x402")) return "x402";
+  if (/(^| )web($| )|web-v|"web"/.test(hay) || name.toLowerCase() === "web") return "web";
+  return null;
+}
 // Summarize the services array — this is the "how do I actually call it" data.
-// Returns { count, names:[...], protos:[...] } where protos flags the known
-// interaction standards (a2a / mcp / web / x402) detected by name, type, or URL.
+// Returns { count, names, protos, entries } where entries keeps the actual
+// endpoint URLs (needed for the second-hop A2A skills / MCP tools fetch).
 function serviceSummary(card) {
   const svc = serviceList(card);
   const names = [];
   const protos = new Set();
+  const entries = [];
   for (const e of svc) {
     const name = e?.name ? String(e.name) : "";
     const url = e?.endpoint ? String(e.endpoint) : "";
     const type = e?.type ? String(e.type) : "";
     if (name) names.push(name.slice(0, 24));
-    const hay = `${name} ${type} ${url}`.toLowerCase();
-    if (hay.includes("a2a") || hay.includes("agent-card") || hay.includes("/.well-known/agent")) protos.add("a2a");
-    if (hay.includes("mcp")) protos.add("mcp");
-    if (/(^| )web($| )|web-v|"web"/.test(hay) || name.toLowerCase() === "web") protos.add("web");
-    if (hay.includes("x402")) protos.add("x402");
+    const p = entryProto(name, type, url);
+    if (p) protos.add(p);
+    if (url) entries.push({ name: name.slice(0, 40), endpoint: url.slice(0, 400), type: type.slice(0, 60), proto: p });
   }
-  return { count: svc.length, names: names.slice(0, 8), protos: [...protos] };
+  return { count: svc.length, names: names.slice(0, 8), protos: [...protos], entries: entries.slice(0, 12) };
 }
 function extract(card) {
   if (!card || typeof card !== "object") return null;
@@ -100,7 +109,11 @@ function extract(card) {
     ep_count: ep.count,
     ep_names: ep.names,
     protos: ep.protos,
+    // actual endpoint URLs per service — input to the second-hop skills fetch
+    services: ep.entries,
     descr: card.description ? String(card.description).slice(0, 90) : null,
+    // full (untruncated) description for LLM classification; capped for sanity
+    descr_full: card.description ? String(card.description).slice(0, 1200) : null,
   };
 }
 
@@ -228,7 +241,9 @@ async function run() {
     ep_count: r.ep_count,
     ep_names: r.ep_names,
     protos: r.protos,
+    services: r.services,
     descr: r.descr,
+    descr_full: r.descr_full,
   });
   const toStatus = (r) => ({ id: r.id, host: r.host, status: r.status });
 

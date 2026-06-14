@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-13",
+  "count": 16,
+  "tiers": {
+    "service": 13,
+    "collectible": 2,
+    "spam": 1
+  },
+  "categories": [
+    {
+      "key": "conversational-assistant-general",
+      "label": "General Conversational & Personal AI Assistant",
+      "definition": "Non-collection agents whose function is broad open-domain or in-character conversation, or a general personal/crypto assistant that spans many tasks (portfolio, markets, code, education) without a single tight function.",
+      "tier": "service"
+    },
+    {
+      "key": "defi-yield-rebalancing",
+      "label": "DeFi Yield Optimization & Portfolio Rebalancing",
+      "definition": "Agents that autonomously scout, allocate, restake, or rebalance user capital into low-risk yield opportunities across protocols and chains, including portfolio-guardian sentinels.",
+      "tier": "service"
+    },
+    {
+      "key": "defi-trade-execution",
+      "label": "Trading & On-Chain Execution",
+      "definition": "Agents that actually execute on-chain financial actions \u2014 token swaps, bridges/cross-chain transfers, perps/options, liquidations, batch/payroll payments, or run autonomous trading strategies \u2014 rather than only analyzing.",
+      "tier": "service"
+    },
+    {
+      "key": "market-data-analytics",
+      "label": "Crypto Market Data, Analytics & Research",
+      "definition": "Read-oriented agents that surface crypto/DeFi market signals \u2014 token prices, oracle feeds, DEX pools, yields, protocol stats, trending tokens, wallet/portfolio analytics, and research Q&A \u2014 to inform decisions.",
+      "tier": "service"
+    },
+    {
+      "key": "security-risk-scoring",
+      "label": "Security, Risk & Trust Scoring",
+      "definition": "Agents that analyze contracts, tokens, wallets, social accounts, or stablecoins to detect fraud, bots, rug-pulls, or risk and produce trust/safety scores.",
+      "tier": "service"
+    },
+    {
+      "key": "realworld-data-feeds",
+      "label": "Real-World Data Feeds (sports, space, geo, news, events)",
+      "definition": "Agents wrapping live non-crypto vertical datasets \u2014 sports/odds, space/astronomy, geolocation/weather, TV schedules, natural-event and crisis monitoring \u2014 typically as free-plus-paid x402 endpoints.",
+      "tier": "service"
+    },
+    {
+      "key": "knowledge-reference-apis",
+      "label": "Knowledge & Reference Lookup APIs",
+      "definition": "Paid agent-to-agent lookup APIs over external knowledge corpora \u2014 academic papers, patents, encyclopedias, dictionaries, crypto knowledge graphs, and similar structured factual data.",
+      "tier": "service"
+    },
+    {
+      "key": "dev-infra-intelligence",
+      "label": "Developer & Tech Intelligence Feeds",
+      "definition": "Agents aggregating software/dev-world signals \u2014 trending GitHub repos, Hacker News/Lobsters, releases, package metadata, tech-sector news, and job-market data.",
+      "tier": "service"
+    },
+    {
+      "key": "builder-infra-tooling",
+      "label": "Developer / Infrastructure & Automation Tooling",
+      "definition": "Agents providing builder or platform plumbing \u2014 dApp/contract/mini-app builders, metered RPC gateways, watchtowers, DeFi automation/workflow composition, and reputation/contribution-scoring services.",
+      "tier": "service"
+    },
+    {
+      "key": "agent-economy-infrastructure",
+      "label": "Agent Economy & Token-Launch Infrastructure",
+      "definition": "Agents that bootstrap the agent economy itself \u2014 token/memecoin launchpads, faucets, fee collection, agent marketplaces, and self-sovereign economic plumbing for other agents.",
+      "tier": "service"
+    },
+    {
+      "key": "identity-naming",
+      "label": "On-Chain Identity & Naming Infrastructure",
+      "definition": "Agents providing identity or naming utilities such as ENS registration/lifecycle management and provisioning on-chain agent identities.",
+      "tier": "service"
+    },
+    {
+      "key": "content-creative-generation",
+      "label": "Content & Creative Generation",
+      "definition": "Agents that generate or manage creative media \u2014 generative art collections, images, memes, video, and social/marketing content campaigns.",
+      "tier": "service"
+    },
+    {
+      "key": "task-execution-services",
+      "label": "Real-World Task & Booking Services",
+      "definition": "Agents that perform real-world task execution against external services, such as searching for the cheapest flights and returning booking links, or social/web search returning structured results.",
+      "tier": "service"
+    },
+    {
+      "key": "nft-collectible-market-reader",
+      "label": "NFT Collectible Agent \u2014 Market-Reading Toolkit (FREAK)",
+      "definition": "Mass-minted NFT-collection agents that all expose the same canned skill set \u2014 reading OpenSea/NFT market data, reporting their ERC-6551 token-bound-account inventory, lore conversation, and on-chain identity verification \u2014 i.e. a templated collectible with real read-only NFT tools.",
+      "tier": "collectible"
+    },
+    {
+      "key": "nft-collectible-persona-chat",
+      "label": "NFT Collectible Agent \u2014 Conversational Persona (Normie)",
+      "definition": "Mass-minted NFT/PFP-collection agents whose only capability is in-character roleplay chat ('Converse with X') with no executable tools beyond lore, including the many with null/empty capabilities.",
+      "tier": "collectible"
+    },
+    {
+      "key": "placeholder-spam",
+      "label": "Placeholder / Spam / Non-Functional",
+      "definition": "Records with gibberish, empty, or boilerplate descriptions and no real listed capability \u2014 junk, test, vanity, or 'exploit'-troll registrations with no discernible function.",
+      "tier": "spam"
+    }
+  ],
+  "notes": "Sixteen categories. Design decisions and known classifier pain points:\n\n1) The two NFT collections (FREAK vs Normie) recur in every single proposal and dominate the population (~40-55 agents combined per 70-agent sample). I kept them as two distinct categories because the discriminator is clean and capability-based: FREAK exposes a real read-only NFT-market/TBA toolkit, Normie exposes only chat/lore (often null skills). Splitting them is more useful than a single 'collectible' bucket. NOTE these are collections, not protocols, so they survive the 'never protocol-based' rule on capability grounds \u2014 but a classifier should key off the skill template, not the collection name.\n\n2) Hardest boundary: Normie persona-chat vs general conversational-assistant. Both are 'just chat.' Rule of thumb: if it's a mass-minted PFP/collection token doing in-character roleplay \u2192 nft-collectible-persona-chat; if it's a standalone non-collection chat/assistant agent \u2192 conversational-assistant-general. The standalone conversational bucket also absorbs proposals' 'general crypto assistant / swarm' since both are broad-and-untight.\n\n3) defi-yield-rebalancing vs defi-trade-execution vs market-data-analytics is a three-way overlap a classifier will struggle with. Discriminator: rebalancing = autonomous capital allocation/rotation for yield; execution = discrete swaps/bridges/perps/payments/liquidations; analytics = read-only signal surfacing with no capital movement. Agents that 'analyze AND execute' should go to execution (the stronger capability); 'analyze AND rebalance' to rebalancing. The Zyfai rebalancer duplicates all land in yield-rebalancing.\n\n4) I merged several thin singletons. 'Treasury/fund monitoring,' 'wallet/portfolio analytics,' 'oracles/price feeds,' and 'DeFi market intelligence' all folded into market-data-analytics. 'Watchtower/infra services' and 'reputation/critic' folded into builder-infra-tooling. 'Utility/generative-geometry endpoints' (constellation coords, etc.) is a real but tiny niche \u2014 I placed it under knowledge-reference-apis as a computed-data lookup; could arguably be its own 'computational endpoint' tag.\n\n5) realworld-data-feeds vs dev-infra-intelligence vs knowledge-reference-apis are all x402 paid lookup APIs and will be the second-biggest confusion zone after the NFT pair. Discriminator is domain: live changing real-world events (sports/weather/space/crisis) \u2192 data-feeds; software/developer ecosystem signals \u2192 dev-intelligence; static-ish reference corpora (papers/patents/encyclopedias) \u2192 knowledge-reference. x402/free+paid structure is a tag, NOT a category, since it cuts across all three.\n\n6) Dropped/absorbed as protocol-or-platform noise: nothing was kept purely on protocol identity. 'ENS tooling' was retained as identity-naming because it's a capability (naming infra), not just the ENS protocol.\n\n7) Placeholder/spam: every proposal independently surfaced empty/gibberish records, plus a couple of joke 'malicious exploit' agents (reversing/hijacking txns with no backing). I merged spam + troll-exploit + vanity-identity-no-skills into one catch-all placeholder-spam, since none have real capability and the distinction is intent, not function. This doubles as the required single 'other' bucket \u2014 anything with no discernible capability lands here rather than being force-fit.\n\n8) task-execution-services (flights/booking, social-web search) is the thinnest real category (2 ids). Borderline candidate for folding into builder-infra or market-data, but it's a distinct capability (acts on external real-world services on the user's behalf) so I kept it; watch for it staying tiny."
+}
