@@ -89,6 +89,12 @@ export default async function Home() {
             >
               Services
             </a>
+            <a
+              href="/collectibles"
+              className="rounded-md border border-border px-2.5 py-1 text-foreground transition-colors hover:border-accent/50"
+            >
+              Collectibles
+            </a>
           </div>
         </div>
       </header>
