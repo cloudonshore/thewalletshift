@@ -79,10 +79,21 @@ dead chips + filters on `/services`, in the agent API (`?status=`), and `/SKILL.
 - **NEXT — challenge coverage:** the active x402 challenge only upgrades to `paywalled`
   on a definitive `402`; the invoke path isn't universal, so many stay liveness-only.
 
+## Real ENS verification (✅ BUILT 2026-06-14)
+Agents self-declare an ENS name in their card; we now verify it **live on Ethereum
+mainnet** (viem, no baked values). `lib/ens.ts` + `GET /api/ens?name=&address=`
+resolve the claimed name and grade it against the agent's on-chain owner:
+**verified** (resolves to owner) / **mismatch** (resolves elsewhere — an unverified
+claim) / **unconfigured** (no address record), plus reverse primary-name check and
+ENSIP-26 text records. Surfaced as a live badge in the `/services` modal, in the
+agent API (`ens_verify` link on `/api/services/{id}`), and `/SKILL.md`. The owner
+address is carried into `services.json` by `build-services-directory.mjs`.
+- **NEXT:** dashboard aggregate ("N of M claimed ENS names verified"); apply across
+  all 98 ENS-claiming agents (not just the 19 in the service tier); ENS avatar render.
+
 ## Pre-existing known fixes (still open)
 - Dashboard concentration metric uses registration owner; should use **current owner**
   (the "top owner 28.8%" is the mint-factory). See `docs/AGENT-DATA-MODEL.md`.
-- **Real ENS verification** vs self-declared (ENS-prize-relevant).
 - Pull **Seaport sale prices** to size the real secondary market.
 - Phase 1.5 `POST /api/revalidate` webhook + Phase 2 scheduled BQ pipeline. See
   `docs/ARCHITECTURE.md`.

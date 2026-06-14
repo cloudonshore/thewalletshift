@@ -88,7 +88,10 @@ provenance still applies to the agent fields feeding the classification pipeline
 - **Decoded from the card JSON:** `name`, `description`, `x402`, `ens`.
 - **Derived by us:** `kind` (URI prefix).
 - **Caveats:** card fields are **registration-time** (URI changes by the 1,365
-  `URIUpdated` agents are not reflected); **ENS is self-declared, not verified**.
+  `URIUpdated` agents are not reflected); the card's **ENS name is self-declared** —
+  we verify it live on-chain at request time via `lib/ens.ts` / `GET /api/ens`
+  (forward+reverse resolution against the agent's owner), so the directory shows a
+  verified/mismatch/unconfigured verdict rather than trusting the claim.
 
 ## Card indexing — BUILT (on-chain in SQL + off-chain fetch pipeline)
 Coverage of all 34,556 agents: **onchain 9,520 · offchain 4,662 (fetchable
