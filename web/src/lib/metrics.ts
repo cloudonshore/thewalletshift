@@ -117,7 +117,3 @@ export function shortAddr(a: string) {
 export function fmt(n: number) {
   return n.toLocaleString("en-US");
 }
-
-export function pct(n: number) {
-  return `${n.toFixed(1)}%`;
-}
