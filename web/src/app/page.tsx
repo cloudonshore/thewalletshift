@@ -175,7 +175,17 @@ export default async function Home() {
             <span className="font-mono">0x8004baa1…</span>) via Google BigQuery, and is reproducible.
             Reputation requires ≥3 distinct reviewers to count, as a Sybil guard. Source: {m.source}.
           </p>
-          <p className="mt-2">The Wallet Shift · built at ETHGlobal New York 2026.</p>
+          <p className="mt-2">
+            The Wallet Shift · built at ETHGlobal New York 2026 · built by{" "}
+            <a
+              href="https://x.com/cloudonshoree"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground hover:text-accent hover:underline"
+            >
+              Sam Walker
+            </a>
+          </p>
         </footer>
       </main>
     </div>

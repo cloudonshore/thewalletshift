@@ -197,7 +197,17 @@ export default function Services() {
             {taxonomy.count}-category taxonomy discovered from the data itself. Categories tiered into real services vs.
             templated NFT collectibles vs. placeholder/spam. As of {classified.generated_at}.
           </p>
-          <p className="mt-2">The Wallet Shift · built at ETHGlobal New York 2026.</p>
+          <p className="mt-2">
+            The Wallet Shift · built at ETHGlobal New York 2026 · built by{" "}
+            <a
+              href="https://x.com/cloudonshoree"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground hover:text-accent hover:underline"
+            >
+              Sam Walker
+            </a>
+          </p>
         </footer>
       </main>
     </div>
