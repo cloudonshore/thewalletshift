@@ -20,22 +20,22 @@ A live analytics dashboard for the on-chain AI **agent economy** ("DeFiLlama for
 - Other managed guardrails: no `rm -rf` (use `trash`), no `sudo`, can't read `~/.npmrc`/`~/.ssh`/wallets.
 
 ## Deploy (Firebase App Hosting)
-- Project: **`thewalletshift`** · backend: **`thewalletshift`** · region **`us-east4`** · Blaze billing (acct `0125E6-98029E-0EC6CA`, $1000 hackathon credits).
+- Project: **`thewalletshift`** · backend: **`thewalletshift`** · region **`us-east4`** · Blaze billing (account ID kept local — not in the public repo).
 - Live URL: `https://thewalletshift--thewalletshift.us-east4.hosted.app`
 - **Auto-deploys on push to `main`** (root dir `web`). Manual: `firebase apphosting:rollouts:create thewalletshift -b main`.
 - Status: `firebase --project thewalletshift apphosting:backends:list`
 
 ## Custom domain
 `thewalletshift.com` → App Hosting. GoDaddy DNS (entered, verified live):
-- `A @ → 35.219.200.204` · `TXT @ → fah-claim=023-02-0ca31f82-7207-4b99-aa5e-aa3fd6891547`
-- `CNAME _acme-challenge_pd4gcad5464drgog → 6ec61726-7e43-4eda-99bc-5a1d4ff2c683.7.authorize.certificatemanager.goog.`
+- `A @ → 35.219.200.204` · `TXT @ → fah-claim=…` (verification token kept local).
+- `CNAME _acme-challenge_… → …authorize.certificatemanager.goog.` (ACME challenge — values kept local).
 - Untouched: `CNAME blog → substack`, `CNAME www → thewalletshift.com`, NS records.
 - Verify DNS: `dig @ns47.domaincontrol.com +short thewalletshift.com A`
 
 ## Data pipeline — see `docs/ARCHITECTURE.md` for the full design + rollout phases
 Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never query BQ from the app.
 - **Refresh data:** `bash scripts/export-metrics.sh <YYYY-MM-DD>` → writes `web/src/data/metrics.json`, then upload it: `gcloud storage cp web/src/data/metrics.json gs://thewalletshift-data/metrics.json --project=thewalletshift --cache-control="public, max-age=300"`.
-- **Serving (Phase 1, live):** the app reads `gs://thewalletshift-data/metrics.json` at runtime via `getMetrics()` in `web/src/lib/metrics.ts` — authenticated with the App Hosting SA `firebase-app-hosting-compute@thewalletshift.iam.gserviceaccount.com` (has `objectViewer` on that bucket) via the GCE metadata server. Rendered through ISR. The bundled JSON in the repo is the offline/build fallback. Bucket is **private** (no public access).
+- **Serving (Phase 1, live):** the app reads `gs://thewalletshift-data/metrics.json` at runtime via `getMetrics()` in `web/src/lib/metrics.ts` — authenticated with the App Hosting compute service account (has `objectViewer` on that bucket) via the GCE metadata server. Rendered through ISR. The bundled JSON in the repo is the offline/build fallback. Bucket is **private** (no public access).
 - **Freshness:** a GCS write self-surfaces within ~6h (Next data-cache `revalidate`). For instant refresh, build the Phase 1.5 `POST /api/revalidate` webhook; a redeploy also clears the cache. **Do NOT make the bucket public** to "fix" staleness — that's not the cause.
 - **Data objects in `gs://thewalletshift-data` (private):** `metrics.json` (dashboard — server-side ISR fetch in `lib/metrics.ts`) · `agents.json` (full 34.5k table, ~8.5 MB with card + off-chain fields — **no longer served to the app** since `/agents` + `/api/agents` were removed; kept in GCS purely as a **pipeline source** for the classification scripts; regen via `export-agents.sh` then `merge-cards.mjs`). Bundled in-repo: **`services.json`** (the 711-provider `/services` directory — built by `build-services-directory.mjs`), **`taxonomy.json`** (the 16-category taxonomy), **`enrichment.json`** (per-agent classification), **`classified.json`** (legacy `/services` analytics aggregates — now only consumed by the home page's charts). `offchain-uris.json`/`offchain-cards.json` and the classification intermediates (`onchain-callable.json`, `enrich-input.json`, `skills.json`, `corpus.json`, `_disc/`, `_cls/`) plus the health-probe intermediate (`health.json` — per-endpoint liveness, folded into the committed `services.json`) are gitignored.
 - **Next (Phase 2):** the 6 queries as BQ Scheduled Queries → `metrics_*` tables → `EXPORT DATA` to the bucket → cron. Firestore is deferred to per-agent profile pages only, not the dashboard.
@@ -69,7 +69,7 @@ Pattern: **BigQuery is the factory, a CDN-served JSON is the storefront.** Never
 - **npm installs:** the user's `~/.npmrc` has stale auth that 401s. For installs use a clean config:
   `NPM_CONFIG_USERCONFIG=/tmp/ws-empty-npmrc NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ npm install …` (Cloud Build is unaffected.)
 - **`bq` CLI hangs (~60s timeout) when IPv6 is broken** (e.g. behind some VPNs): `bigquery.googleapis.com` resolves to IPv6, and bq's Python httplib2 has no happy-eyeballs fallback. Auth/network are fine — `curl -4` to the BigQuery REST API works instantly. The export script therefore uses **BigQuery REST over `curl -4`**, not `bq`. If you need `bq` itself, restore IPv6 (toggle VPN) or disable IPv6 on the interface.
-- bq/gcloud authed (samuel.walker9@gmail.com); firebase CLI authed; gh authed as cloudonshore.
+- bq/gcloud authed; firebase CLI authed; gh authed (cloudonshore).
 - **Restart the dev server after `next build`** — running `npm run build` while `next dev` is live clobbers the shared `.next` and the dev server then 500s. (Recurring "Internal Server Error" on localhost = this, not a code bug.)
 - **Browser tool (Chrome MCP) is blocked from `etherscan.io`** ("safety restrictions"). Give the user the link, or characterize contracts from BigQuery / the committed ABIs instead.
 
