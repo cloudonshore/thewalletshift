@@ -6,7 +6,7 @@
   --card: #0d0f14;
   --border: #1a1e26;
   --muted: #868e9e;
-  --accent: #f0531f;
+  --accent: #79c15f;
 }
 
 @theme inline {
@@ -38,5 +38,5 @@ body {
 }
 
 ::selection {
-  background: rgba(240, 83, 31, 0.25);
+  background: rgba(121, 193, 95, 0.25);
 }
