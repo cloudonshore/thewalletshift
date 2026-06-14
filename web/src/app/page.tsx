@@ -162,8 +162,9 @@ export default async function Home() {
               categories={classified.category_growth.categories}
             />
             <p className="mt-3 text-xs leading-relaxed text-muted">
-              DeFi yield/rebalancing dominates by volume (mostly Olas services and one ZK-yield
-              minter). Toggle it off in the legend to see how the smaller categories are growing.
+              DeFi yield/rebalancing dominates by volume — ~90% (408) is a single platform,{" "}
+              <span className="text-foreground">Zyfai</span>, deploying one ZK rebalancer agent per
+              user wallet. Toggle it off in the legend to see how the smaller categories are growing.
             </p>
           </Card>
         </div>

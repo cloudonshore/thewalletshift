@@ -19,7 +19,8 @@ on the agents that actually provide services; ignore the long-tail junk.
   the `web` proto is a weak signal (often just a website); 369 off-chain cards still
   persistently 429. `validator.eth`-style ens-only "services" are correctly excluded
   from callable. Consider a "distinct operators per category" metric — the service tier
-  is itself concentrated (Olas + one ZK-yield minter dominate `defi-yield-rebalancing`).
+  is itself concentrated (Zyfai's per-user ZK rebalancer is ~90% of `defi-yield-rebalancing`
+  — 408 of 455; Olas is only 13).
 
 ## Card spec-compliance / validator view (deferred 2026-06-13)
 Source of truth: **8004scan best-practices / validator spec** —

@@ -132,9 +132,10 @@ bindings alone don't count). Pipeline (all scripts in `scripts/`, order in `CLAU
    to `classified.json` (counts, top tags, examples, cumulative growth series).
 - **Headline finding:** of 2,037 callable, **711 are real services**; **1,268 are two
   mass-minted NFT collections** (FREAK = read-only NFT toolkit, Normie = persona-chat),
-  **58 spam**. Even the service tier is concentrated — Olas services + one ZK-yield minter
-  dominate `defi-yield-rebalancing` (455). The `tier` field lets the UI feature services
-  and de-emphasize the templated collectibles.
+  **58 spam**. Even the service tier is concentrated — one platform, **Zyfai** (a per-user
+  ZK-powered yield rebalancer, one agent minted per user wallet), is ~90% of
+  `defi-yield-rebalancing` (**408 of 455**, each a distinct owner); Olas is only 13. The
+  `tier` field lets the UI feature services and de-emphasize the templated collectibles.
 - ⚠️ The LLM `summary`/`tags`/`category` are **model-generated** (not on-chain) — they're a
   best-effort read of each card's description + fetched skills, re-runnable but non-deterministic.
 
