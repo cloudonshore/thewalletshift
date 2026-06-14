@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ServicesDirectory } from "@/components/services-directory";
 import { fmt, services } from "@/lib/services";
 import { taxonomy } from "@/lib/classified";
@@ -12,13 +13,15 @@ function Nav() {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
-        <a href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <Image src="/walletshiftlogo.png" alt="The Wallet Shift" width={24} height={24} priority className="rounded-full" />
           <span className="font-semibold tracking-tight">The Wallet Shift</span>
-        </a>
-        <div className="flex items-center gap-2 text-xs text-muted">
+        </Link>
+        <div className="flex items-center gap-4 text-xs text-muted">
+          <span className="hidden sm:inline">Ethereum mainnet</span>
+          <span className="tabular hidden sm:inline">as of {services.generated_at}</span>
           {links.map(([href, label]) => (
-            <a
+            <Link
               key={href}
               href={href}
               className={`rounded-md border px-2.5 py-1 transition-colors hover:border-accent/50 ${
@@ -26,7 +29,7 @@ function Nav() {
               }`}
             >
               {label}
-            </a>
+            </Link>
           ))}
         </div>
       </div>

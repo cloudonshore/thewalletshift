@@ -16,7 +16,9 @@ function Nav() {
           <Image src="/walletshiftlogo.png" alt="The Wallet Shift" width={24} height={24} priority className="rounded-full" />
           <span className="font-semibold tracking-tight">The Wallet Shift</span>
         </Link>
-        <div className="flex items-center gap-2 text-xs text-muted">
+        <div className="flex items-center gap-4 text-xs text-muted">
+          <span className="hidden sm:inline">Ethereum mainnet</span>
+          <span className="tabular hidden sm:inline">as of {collectibles.generated_at}</span>
           {links.map(([href, label]) => (
             <Link
               key={href}
