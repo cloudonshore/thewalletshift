@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Provider, ServiceCategory } from "@/lib/services";
 import { fmt } from "@/lib/services";
 
@@ -40,15 +40,18 @@ function haystack(p: Provider): string {
     .toLowerCase();
 }
 
-function ProviderRow({ p }: { p: Provider }) {
-  const [open, setOpen] = useState(false);
+function skillsWord(p: Provider): string {
+  return p.protos.includes("mcp") && !p.protos.includes("a2a") ? "tools" : "skills";
+}
+
+function ProviderRow({ p, onOpen }: { p: Provider; onOpen: () => void }) {
   const protos = [...new Set([...p.protos, ...(p.x402 ? ["x402"] : [])])];
   const hosts = [...new Set(p.endpoints.map((e) => e.host).filter(Boolean))];
   return (
     <li className="border-t border-border/60 first:border-t-0">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onOpen}
         className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.015]"
       >
         <div className="min-w-0 flex-1">
@@ -67,30 +70,83 @@ function ProviderRow({ p }: { p: Provider }) {
             ))}
             {p.skills.length > 0 && (
               <span className="text-accent/80">
-                {p.skills.length} {p.protos.includes("mcp") && !p.protos.includes("a2a") ? "tools" : "skills"}
+                {p.skills.length} {skillsWord(p)}
               </span>
             )}
             {p.kind === "onchain" && <span className="text-muted/70">on-chain card</span>}
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="flex flex-wrap justify-end gap-1">
-            {protos.map((pr) => (
-              <ProtoChip key={pr} p={pr} />
-            ))}
-          </span>
-          <span className="text-[11px] text-muted/60">{open ? "−" : "+"}</span>
-        </div>
+        <span className="flex shrink-0 flex-wrap justify-end gap-1">
+          {protos.map((pr) => (
+            <ProtoChip key={pr} p={pr} />
+          ))}
+        </span>
       </button>
+    </li>
+  );
+}
 
-      {open && (
-        <div className="border-t border-border/40 bg-background/40 px-4 py-3.5">
-          {p.descr && p.descr !== p.summary && (
-            <p className="mb-3 max-w-3xl text-sm leading-relaxed text-foreground/80">{p.descr}</p>
+function ProviderModal({ p, onClose }: { p: Provider; onClose: () => void }) {
+  // close on Escape; lock body scroll while open
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  const protos = [...new Set([...p.protos, ...(p.x402 ? ["x402"] : [])])];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={p.name || `Agent #${p.id}`}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:p-8"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="my-auto w-full max-w-3xl rounded-2xl border border-border bg-card shadow-2xl"
+      >
+        {/* sticky header */}
+        <div className="sticky top-0 z-10 flex items-start gap-3 rounded-t-2xl border-b border-border bg-card/95 px-5 py-4 backdrop-blur">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h2 className="text-lg font-semibold text-foreground">{p.name || `Agent #${p.id}`}</h2>
+              {p.ens && <span className="font-mono text-xs text-accent/80">{p.ens}</span>}
+              <span className="tabular font-mono text-xs text-muted">#{p.id}</span>
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="rounded bg-border/60 px-1.5 py-0.5 text-[10px] text-muted">{p.label}</span>
+              {protos.map((pr) => (
+                <ProtoChip key={pr} p={pr} />
+              ))}
+              {p.kind && <span className="text-[11px] text-muted/70">{p.kind} card</span>}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-1 shrink-0 rounded-md border border-border px-2 py-1 text-sm text-muted transition-colors hover:border-accent/50 hover:text-foreground"
+          >
+            Esc ✕
+          </button>
+        </div>
+
+        {/* body */}
+        <div className="px-5 py-4">
+          {(p.descr || p.summary) && (
+            <p className="mb-4 text-sm leading-relaxed text-foreground/80">{p.descr || p.summary}</p>
           )}
 
           {p.endpoints.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-4">
               <div className="mb-1.5 text-[11px] uppercase tracking-wide text-muted">Endpoints</div>
               <ul className="space-y-1">
                 {p.endpoints.map((e) => (
@@ -111,15 +167,15 @@ function ProviderRow({ p }: { p: Provider }) {
           )}
 
           {p.skills.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-4">
               <div className="mb-1.5 text-[11px] uppercase tracking-wide text-muted">
-                Live capabilities · {p.skills.length}
+                Live capabilities · {p.skills.length} {skillsWord(p)}
               </div>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {p.skills.map((s, i) => (
-                  <li key={`${s.name}-${i}`} className="rounded-lg border border-border/60 bg-card p-2.5">
+                  <li key={`${s.name}-${i}`} className="rounded-lg border border-border/60 bg-background/40 p-2.5">
                     <div className="text-xs font-medium text-foreground">{s.name}</div>
-                    {s.desc && <p className="mt-0.5 line-clamp-3 text-[11px] leading-relaxed text-muted">{s.desc}</p>}
+                    {s.desc && <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.desc}</p>}
                   </li>
                 ))}
               </ul>
@@ -136,8 +192,8 @@ function ProviderRow({ p }: { p: Provider }) {
             </div>
           )}
         </div>
-      )}
-    </li>
+      </div>
+    </div>
   );
 }
 
@@ -151,6 +207,7 @@ export function ServicesDirectory({
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [protos, setProtos] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Provider | null>(null);
 
   // precompute haystacks once
   const indexed = useMemo(() => providers.map((p) => ({ p, hay: haystack(p) })), [providers]);
@@ -270,10 +327,12 @@ export function ServicesDirectory({
           {results.length === 0 ? (
             <li className="px-4 py-12 text-center text-sm text-muted">No services match those filters.</li>
           ) : (
-            results.map((p) => <ProviderRow key={p.id} p={p} />)
+            results.map((p) => <ProviderRow key={p.id} p={p} onOpen={() => setSelected(p)} />)
           )}
         </ul>
       </div>
+
+      {selected && <ProviderModal p={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
